@@ -1,0 +1,16 @@
+x11fs X window virtual filesystem:
+
+x11fs is a tool for manipulating X windows.
+It creates a vitual filesystem to represent open windows, similar to what /proc does for processes.
+This allows windows to be controlled using any language or tool with simple file IO, in a true unix fashion.
+
+
+Build:
+
+After installing the relevant developement packages for fuse and xcb for your distro (on Ubuntu these are libxcb1-dev and libfuse-dev), x11fs can be built using the make command.
+Installation can be done by invoking make install.
+
+
+Usage:
+
+See the wiki (http://github.com/sdhand/x11fs/wiki) for more information.
