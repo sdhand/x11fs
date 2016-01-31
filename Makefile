@@ -2,7 +2,7 @@ CC=cc
 LD=$(CC)
 
 LIBS=`pkg-config fuse --libs` `pkg-config xcb --libs`
-CFLAGS=-Wall -std=c11 -c `pkg-config fuse --cflags` `pkg-config xcb --cflags`
+CFLAGS=-Wall -std=gnu11 -c `pkg-config fuse --cflags` `pkg-config xcb --cflags`
 
 PREFIX?=/usr
 
