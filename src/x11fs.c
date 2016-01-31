@@ -156,7 +156,7 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 					//Add each window to our directory listing
 					for(int j=0; wins[j]; j++){
-						int win = wins[i];
+						int win = wins[j];
 						char *win_string;
 
 						win_string = malloc(sizeof(char)*(WID_STRING_LENGTH));
