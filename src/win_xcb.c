@@ -24,3 +24,9 @@ X11FS_STATUS xcb_init()
 	}
 	return X11FS_SUCCESS;
 }
+
+//End our connection
+void xcb_cleanup(){
+	if(conn != NULL)
+		xcb_disconnect(conn);
+}
