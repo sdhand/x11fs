@@ -1,6 +1,7 @@
 #include <xcb/xcb.h>
 #include <err.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "x11fs.h"
 
 //Our connection to xcb and our screen
@@ -29,4 +30,17 @@ X11FS_STATUS xcb_init()
 void xcb_cleanup(){
 	if(conn != NULL)
 		xcb_disconnect(conn);
+}
+
+//check if a window exists
+bool exists(int wid)
+{
+	xcb_get_window_attributes_cookie_t attr_c = xcb_get_window_attributes(conn, wid);
+	xcb_get_window_attributes_reply_t *attr_r = xcb_get_window_attributes_reply(conn, attr_c, NULL);
+
+	if(attr_r == NULL)
+		return false;
+
+	free(attr_r);
+	return true;
 }

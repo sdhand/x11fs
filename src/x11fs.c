@@ -15,8 +15,8 @@ struct x11fs_file{
 	const char *path;
 	int mode;
 	bool dir;
-	char *(*read)(const char *path);
-	void (*write)(const char *path, const char *buf);	
+	char *(*read)(int wid);
+	void (*write)(int wid, const char *buf);	
 };
 
 
@@ -42,6 +42,20 @@ static const struct x11fs_file x11fs_files[] = {
 		{"/event", S_IFREG | 0400, false, NULL, NULL},
 };
 
+//Pull out the id of a window from a path
+static int get_winid(const char *path)
+{
+	int wid = 0;
+	//Check if the path is to a window directory or it's contents
+	if(strncmp(path, "/0x", 3) == 0)
+		//Get the id
+		sscanf(path, "/0x%08x", &wid);
+	else
+		return -1;
+
+	return wid;
+}
+
 //Runs when our filesystem is unmounted
 static void x11fs_destroy()
 {
@@ -58,9 +72,20 @@ static int x11fs_truncate(const char *path, off_t size)
 //Gives information about a file
 static int x11fs_getattr(const char *path, struct stat *stbuf)
 {
+	//zero the information about the file
 	memset(stbuf, 0, sizeof(struct stat));
+
+	//loop through our filesystem layout and check if the path matches one in our layout
 	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
 		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
+			//if the path is to a window file, check that the window exists
+			int wid;
+			if((wid=get_winid(path)) != -1){
+				if(!exists(wid))
+					return -ENOENT;
+			}
+
+			//if a path matches just use the information about the file from the layout
 			if(x11fs_files[i].dir)
 				stbuf->st_nlink = 2;
 			else
@@ -69,12 +94,19 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 			return 0;
 		}
 	}
+
+	//No such file or directory
 	return -ENOENT;
 }
 
 static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
-	return 0;
+	(void) offset;
+	(void) fi;
+
+	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+		
+	}
 }
 
 static int x11fs_open(const char *path, struct fuse_file_info *fi)
