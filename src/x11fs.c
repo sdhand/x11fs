@@ -100,6 +100,7 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 	return -ENOENT;
 }
 
+//Gives the contents of a directory
 static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
 	(void) offset;
@@ -190,11 +191,6 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 	return 0;
 }
 
-static int x11fs_open(const char *path, struct fuse_file_info *fi)
-{
-	return 0;
-}
-
 static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	return 0;
@@ -216,7 +212,6 @@ static struct fuse_operations x11fs_operations = {
 	.truncate = x11fs_truncate,
 	.getattr  = x11fs_getattr,
 	.readdir  = x11fs_readdir,
-	.open     = x11fs_open,
 	.read     = x11fs_read,
 	.write    = x11fs_write,
 	.rmdir    = x11fs_rmdir,
