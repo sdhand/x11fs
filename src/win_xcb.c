@@ -72,3 +72,11 @@ int *list_windows()
 	win_list[i]=0;
 	return win_list;
 }
+
+//This is a terrible way to close windows
+//TODO: use EWMH atoms here to get the window to close rather than just killing it
+void close_window(int wid)
+{
+	xcb_kill_client(conn, wid);
+	xcb_flush(conn);
+}

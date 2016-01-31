@@ -7,3 +7,4 @@ void xcb_cleanup();
 
 bool exists(int wid);
 int *list_windows();
+void close_window(int wid);
