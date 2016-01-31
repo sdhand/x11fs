@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <fuse.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
@@ -104,9 +105,66 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 	(void) offset;
 	(void) fi;
 
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
-		
+	int wid;
+	if((wid = get_winid(path)) != -1){
+		if(!exists(wid))
+			return -ENOENT;
 	}
+
+	bool exists = false;
+	bool dir = false;
+
+
+	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+		char *matchpath;
+		if((wid != -1) && (get_winid(x11fs_files[i].path) != -1)){
+			matchpath=malloc(strlen(x11fs_files[i].path)+8);
+			sprintf(matchpath, "/0x%08x", wid);
+			sprintf(matchpath+11, x11fs_files[i].path+4);
+		}
+		else
+			matchpath=strdup(x11fs_files[i].path);
+
+		int len;
+		if(strcmp(path, "/") == 0)
+			len = 0;
+		else
+			len = strlen(path);
+
+		if(strncmp(path, matchpath, strlen(path)) == 0){
+			exists = true;
+			if((strlen(matchpath) > strlen(path))
+					&& ((matchpath+len)[0] == '/')
+					&& (strchr(matchpath+len+1, '/') == NULL)){
+				dir = true;
+				if(strcmp(matchpath, "/0x*") == 0){
+					int *wins = list_windows();
+					for(int j=0; wins[j]; j++){
+						int win = wins[i];
+						char *win_string;
+						win_string = malloc(sizeof(char)*(WID_STRING_LENGTH));
+						sprintf(win_string, "0x%08x", win);
+						filler(buf, win_string, NULL, 0);
+						free(win_string);
+					}
+					free(wins);
+				}else
+					filler(buf, matchpath+len+1, NULL, 0);
+			}
+		}
+		free(matchpath);
+	}
+
+	if(!exists)
+		return -ENOENT;
+
+	if(dir){
+		filler(buf, ".", NULL, 0);
+		filler(buf, "..", NULL, 0);
+	}else
+		return -ENOTDIR;
+
+	return 0;
 }
 
 static int x11fs_open(const char *path, struct fuse_file_info *fi)

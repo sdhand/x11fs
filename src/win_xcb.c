@@ -44,3 +44,31 @@ bool exists(int wid)
 	free(attr_r);
 	return true;
 }
+
+//List every open window
+int *list_windows()
+{
+	//Get the window tree for the root window
+	xcb_query_tree_cookie_t tree_c = xcb_query_tree(conn, scrn->root);
+	xcb_query_tree_reply_t *tree_r = xcb_query_tree_reply(conn, tree_c, NULL);
+
+	if(tree_r == NULL)
+		warnx("Couldn't find the root window's");
+
+	//Get the array of windows
+	xcb_window_t *xcb_win_list = xcb_query_tree_children(tree_r);
+	if(xcb_win_list == NULL)
+		warnx("Couldn't find the root window's children");
+
+	int *win_list = malloc(sizeof(int)*(tree_r->children_len+1));
+	int i;
+	for (i=0; i<tree_r->children_len; i++) {
+		 win_list[i] = xcb_win_list[i];
+	}
+
+	free(tree_r);
+
+	//Null terminate our list
+	win_list[i]=0;
+	return win_list;
+}

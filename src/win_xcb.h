@@ -6,3 +6,4 @@ X11FS_STATUS xcb_init();
 void xcb_cleanup();
 
 bool exists(int wid);
+int *list_windows();
