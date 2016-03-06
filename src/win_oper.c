@@ -1,12 +1,15 @@
 #include "win_oper.h"
 #include "win_xcb.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "x11fs.h"
 
 void border_color_write(int wid, const char *buf)
 {
 
 }
 
-int border_width_read(int wid, char *buf, size_t size)
+char *border_width_read(int wid)
 {
 	return 0;
 }
@@ -16,7 +19,7 @@ void border_width_write(int wid, const char *buf)
 
 }
 
-int geometry_width_read(int wid, char *buf, size_t size)
+char *geometry_width_read(int wid)
 {
 	return 0;
 }
@@ -26,7 +29,7 @@ void geometry_width_write(int wid, const char *buf)
 
 }
 
-int geometry_height_read(int wid, char *buf, size_t size)
+char *geometry_height_read(int wid)
 {
 	return 0;
 }
@@ -36,7 +39,7 @@ void geometry_height_write(int wid, const char *buf)
 
 }
 
-int geometry_x_read(int wid, char *buf, size_t size)
+char *geometry_x_read(int wid)
 {
 	return 0;
 }
@@ -46,7 +49,7 @@ void geometry_x_write(int wid, const char *buf)
 
 }
 
-int geometry_y_read(int wid, char *buf, size_t size)
+char *geometry_y_read(int wid)
 {
 	return 0;
 }
@@ -56,7 +59,7 @@ void geometry_y_write(int wid, const char *buf)
 
 }
 
-int mapped_read(int wid, char *buf, size_t size)
+char *mapped_read(int wid)
 {
 	return 0;
 }
@@ -66,7 +69,7 @@ void mapped_write(int wid, const char *buf)
 
 }
 
-int ignored_read(int wid, char *buf, size_t size)
+char *ignored_read(int wid)
 {
 	return 0;
 }
@@ -81,29 +84,27 @@ void stack_write(int wid, const char *buf)
 
 }
 
-int title_read(int wid, char *buf, size_t size)
+char *title_read(int wid)
 {
 	return 0;
 }
 
-void title_write(int wid, const char *buf)
-{
-
-}
-
-int class_read(int wid, char *buf, size_t size)
+char *class_read(int wid)
 {
 	return 0;
 }
 
-int event_read(int wid, char *buf, size_t size)
+char *event_read(int wid)
 {
-	return 0;
+	return get_events(wid);
 }
 
-int focused_read(int wid, char *buf, size_t size)
+char *focused_read(int wid)
 {
-	return 0;
+	(void) wid;
+	char *focusedwin = malloc(WID_STRING_LENGTH+1);
+	sprintf(focusedwin, "0x%08x\n", focused());
+	return focusedwin;
 }
 
 void focused_write(int wid, const char *buf)
@@ -111,7 +112,7 @@ void focused_write(int wid, const char *buf)
 
 }
 
-int generic_event_read(int wid, char *buf, size_t size)
+char *generic_event_read(int wid)
 {
 	return 0;
 }

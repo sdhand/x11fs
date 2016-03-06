@@ -1,6 +1,8 @@
 #include <xcb/xcb.h>
 #include <err.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 #include "x11fs.h"
 
@@ -79,4 +81,265 @@ void close_window(int wid)
 {
 	xcb_kill_client(conn, wid);
 	xcb_flush(conn);
+}
+
+//Get the focused window
+int focused()
+{
+	//Ask xcb for the focused window
+	xcb_get_input_focus_cookie_t focus_c;
+	xcb_get_input_focus_reply_t *focus_r;
+
+	focus_c = xcb_get_input_focus(conn);
+	focus_r = xcb_get_input_focus_reply(conn, focus_c, NULL);
+
+	//Couldn't find the focused window
+	if(focus_r == NULL)
+		return -1;
+
+	int focused = focus_r->focus;
+	free(focus_r);
+	return focused;
+}
+
+//Change the focus
+void focus(int wid)
+{
+	xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT, wid, XCB_CURRENT_TIME);
+	xcb_flush(conn);
+}
+
+//Simple function to avoid code re-use; gets the properties of a window (title, class etc)
+static xcb_get_property_reply_t *get_prop(int wid, xcb_atom_t property, xcb_atom_t type)
+{
+	xcb_get_property_cookie_t prop_c = xcb_get_property(conn, 0, wid, property, type, 0L, 32L);
+	return xcb_get_property_reply(conn, prop_c, NULL);
+}
+
+//Simple function to avoid code re-use; get's the geometry of a window
+static xcb_get_geometry_reply_t *get_geom(int wid)
+{
+	xcb_get_geometry_cookie_t geom_c = xcb_get_geometry(conn, wid);
+	return xcb_get_geometry_reply(conn, geom_c, NULL);
+}
+
+//Simple function to avoid code re-use; gets the attributes of a window (mapped, ignored etc)
+static xcb_get_window_attributes_reply_t *get_attr(int wid)
+{
+	xcb_get_window_attributes_cookie_t attr_c = xcb_get_window_attributes(conn, wid);
+	return xcb_get_window_attributes_reply(conn, attr_c, NULL);
+}
+
+//Bunch of functions to get and set window properties etc.
+//All should be fairly self explanatory
+
+int get_width(int wid)
+{
+	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
+	if(geom_r == NULL)
+		return -1;
+
+	int width = geom_r->width;
+	free(geom_r);
+	return width;
+}
+
+void set_width(int wid, int width)
+{
+	uint32_t values[] = {width};
+	xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_WIDTH, values);
+	xcb_flush(conn);
+}
+
+int get_height(int wid)
+{
+	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
+	if(geom_r == NULL)
+		return -1;
+
+	int height = geom_r->height;
+	free(geom_r);
+	return height;
+}
+
+void set_height(int wid, int height)
+{
+	uint32_t values[] = {height};
+	xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_HEIGHT, values);
+	xcb_flush(conn);
+}
+
+int get_x(int wid)
+{
+	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
+	if(geom_r == NULL)
+		return -1;
+
+	int x = geom_r->x;
+	free(geom_r);
+	return x;
+}
+
+void set_x(int wid, int x)
+{
+    uint32_t values[] = {x};
+    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_X, values);
+    xcb_flush(conn);
+}
+
+int get_y(int wid)
+{
+    xcb_get_geometry_reply_t *geom_r = get_geom(wid);
+    if(geom_r == NULL)
+        return -1; 
+
+    int y = geom_r->y;
+    free(geom_r);
+    return y;
+}
+
+void set_y(int wid, int y)
+{
+    uint32_t values[] = {y};
+    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_Y, values);
+    xcb_flush(conn);
+}
+
+int get_border_width(int wid)
+{
+    xcb_get_geometry_reply_t *geom_r = get_geom(wid);
+    if(geom_r == NULL)
+        return -1; 
+
+    int bw = geom_r->border_width;
+    free(geom_r);
+    return bw; 
+}
+
+void set_border_width(int wid, int width)
+{
+    uint32_t values[] = {width};
+    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_BORDER_WIDTH, values);
+    xcb_flush(conn);
+}
+
+void set_border_color(int wid, int color)
+{
+    uint32_t values[] = {color};
+    xcb_change_window_attributes(conn, wid, XCB_CW_BORDER_PIXEL, values);
+    xcb_flush(conn);
+}
+
+int get_mapped(int wid)
+{
+    xcb_get_window_attributes_reply_t *attr_r = get_attr(wid);
+    if(attr_r == NULL)
+        return -1; 
+
+    int map_state = attr_r->map_state;
+    free(attr_r);
+    if(map_state == XCB_MAP_STATE_VIEWABLE){
+        return 1;
+    }
+    return 0;
+}
+
+void set_mapped(int wid, int mapstate)
+{
+    if(mapstate)
+        xcb_map_window(conn, wid);
+    else
+        xcb_unmap_window(conn, wid);
+    xcb_flush(conn);
+}
+
+int get_ignored(int wid)
+{
+    xcb_get_window_attributes_reply_t *attr_r = get_attr(wid);
+    if(attr_r == NULL)
+        return -1;
+
+    int or = attr_r->override_redirect;
+    free(attr_r);
+    return or;
+}
+
+void set_ignored(int wid, int ignore)
+{
+    uint32_t values[] = {ignore};
+    xcb_change_window_attributes(conn, wid, XCB_CW_OVERRIDE_REDIRECT, values);
+}
+
+char *get_title(int wid)
+{
+    xcb_get_property_reply_t *prop_r = get_prop(wid, XCB_ATOM_WM_NAME, XCB_ATOM_STRING);
+    if(prop_r == NULL)
+        return NULL;
+
+    char *title = (char *) xcb_get_property_value(prop_r);
+    int len = xcb_get_property_value_length(prop_r);
+    char *title_string=malloc(len+1);
+    sprintf(title_string, "%.*s", len, title);
+    free(prop_r);
+    return title_string;
+}
+
+//Get an array of the classes of the window
+char **get_class(int wid)
+{
+    char **classes = malloc(sizeof(char*)*2);
+    xcb_get_property_reply_t *prop_r = get_prop(wid, XCB_ATOM_WM_CLASS, XCB_ATOM_STRING);
+    if(prop_r == NULL) {
+        free(classes);
+        return NULL;
+    }
+
+    char *class;
+    class=(char *) xcb_get_property_value(prop_r);
+    classes[0]=strdup(class);
+    classes[1]=strdup(class+strlen(class)+1);
+
+    free(prop_r);
+    return classes;
+}
+
+void raise(int wid)
+{
+    uint32_t values[] = {XCB_STACK_MODE_ABOVE};
+    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_STACK_MODE, values);
+    xcb_flush(conn);
+}
+
+void lower(int wid)
+{
+    uint32_t values[] = {XCB_STACK_MODE_BELOW};
+    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_STACK_MODE, values);
+    xcb_flush(conn);
+}
+
+//Get events for a window
+char *get_events(int wid){
+	const static uint32_t values[] = {33554431};
+	xcb_change_window_attributes (conn, wid, XCB_CW_EVENT_MASK, values);
+	xcb_flush(conn);
+	xcb_generic_event_t *event;
+	/*char *events=NULL;
+	while((event=xcb_poll_for_event (conn))!=NULL){
+		int len=0;
+		if(events!=NULL)
+			len=strlen(events);
+		events=realloc(events, len+4);
+		sprintf(events+len, "%d\n", (event->response_type & ~0x80));
+		free(event);
+	}*/
+	event=xcb_wait_for_event(conn);
+	char *event_string=NULL;
+	if(event!=NULL){
+		event_string=malloc(4);
+		sprintf(event_string, "%d\n", (event->response_type & ~0x80));
+	}
+	free(event);
+	const static uint32_t stop[] = {0};
+	xcb_change_window_attributes (conn, wid, XCB_CW_EVENT_MASK, stop);
+	return event_string;
 }

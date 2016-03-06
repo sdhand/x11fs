@@ -16,32 +16,33 @@
 struct x11fs_file{
 	const char *path;
 	int mode;
+	bool direct_io;
 	bool dir;
-	int (*read)(int wid, char *buf, size_t size);
+	char *(*read)(int wid);
 	void (*write)(int wid, const char *buf);	
 };
 
 
 //Our file layout
 static const struct x11fs_file x11fs_files[] = {
-	{"/", S_IFDIR | 0700, true, NULL, NULL},
-		{"/0x*", S_IFDIR | 0700, true, NULL, NULL},
-			{"/0x*/border", S_IFDIR | 0700, true, NULL, NULL},
-				{"/0x*/border/color", S_IFREG | 0200, false, NULL, border_color_write},
-				{"/0x*/border/width", S_IFREG | 0600, false, border_width_read, border_width_write},
-			{"/0x*/geometry", S_IFDIR | 0700, true, NULL, NULL},
-				{"/0x*/geometry/width", S_IFREG | 0600, false, geometry_width_read, geometry_width_write},
-				{"/0x*/geometry/height", S_IFREG | 0600, false, geometry_height_read,  geometry_height_write},
-				{"/0x*/geometry/x", S_IFREG | 0600, false, geometry_x_read, geometry_x_write},
-				{"/0x*/geometry/y", S_IFREG | 0600, false, geometry_y_read, geometry_y_write},
-			{"/0x*/mapped", S_IFREG | 0600, false, mapped_read, mapped_write},
-			{"/0x*/ignored", S_IFREG | 0600, false, ignored_read, ignored_write},
-			{"/0x*/stack", S_IFREG | 0200, false, NULL, stack_write},
-			{"/0x*/title", S_IFREG | 0600, false, title_read, title_write},
-			{"/0x*/class", S_IFREG | 0400, false, class_read, NULL},
-			{"/0x*/event", S_IFREG | 0400, false,  event_read, NULL},
-		{"/focused", S_IFREG | 0600, false, focused_read, focused_write},
-		{"/event", S_IFREG | 0400, false, generic_event_read, NULL},
+	{"/", S_IFDIR | 0700, false, true, NULL, NULL},
+		{"/0x*", S_IFDIR | 0700, false, true, NULL, NULL},
+			{"/0x*/border", S_IFDIR | 0700, false, true, NULL, NULL},
+				{"/0x*/border/color", S_IFREG | 0200, false, false, NULL, border_color_write},
+				{"/0x*/border/width", S_IFREG | 0600, false, false, border_width_read, border_width_write},
+			{"/0x*/geometry", S_IFDIR | 0700, false, true, NULL, NULL},
+				{"/0x*/geometry/width", S_IFREG | 0600, false, false, geometry_width_read, geometry_width_write},
+				{"/0x*/geometry/height", S_IFREG | 0600, false, false, geometry_height_read,  geometry_height_write},
+				{"/0x*/geometry/x", S_IFREG | 0600, false, false, geometry_x_read, geometry_x_write},
+				{"/0x*/geometry/y", S_IFREG | 0600, false, false, geometry_y_read, geometry_y_write},
+			{"/0x*/mapped", S_IFREG | 0600, false, false, mapped_read, mapped_write},
+			{"/0x*/ignored", S_IFREG | 0600, false, false, ignored_read, ignored_write},
+			{"/0x*/stack", S_IFREG | 0200, false, false, NULL, stack_write},
+			{"/0x*/title", S_IFREG | 0400, false, false, title_read, NULL},
+			{"/0x*/class", S_IFREG | 0400, false, false, class_read, NULL},
+			{"/0x*/event", S_IFREG | 0400, true, false, event_read, NULL},
+		{"/focused", S_IFREG | 0600, false, false, focused_read, focused_write},
+		{"/event", S_IFREG | 0400, true, false, generic_event_read, NULL},
 };
 
 //Pull out the id of a window from a path
@@ -93,6 +94,15 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 			else
 				stbuf->st_nlink = 1;
 			stbuf->st_mode = x11fs_files[i].mode;
+		
+			stbuf->st_size = 0;
+			if((x11fs_files[i].read != NULL) && !(x11fs_files[i].direct_io))
+			{
+				char *read_string=x11fs_files[i].read(wid);
+				stbuf->st_size=strlen(read_string);
+				free(read_string);
+			}
+			
 			return 0;
 		}
 	}
@@ -212,6 +222,7 @@ static int x11fs_open(const char *path, struct fuse_file_info *fi)
 				return -EISDIR;
 
 			fi->nonseekable=1;
+			fi->direct_io=x11fs_files[i].direct_io;
 			return 0;
 		 }
 	}
@@ -240,7 +251,16 @@ static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, st
 				return -EACCES;
 
 			//Call the read function and stick the results in the buffer
-			return x11fs_files[i].read(wid, buf, size);
+			char *result= x11fs_files[i].read(wid);
+			if(result == NULL)
+				return 0;
+
+			size_t len = strlen(result);
+			if(size > len)
+				size = len;
+			memcpy(buf, result, size);
+			free(result);
+			return size;
 		}
 	}
 	return -ENOENT;
