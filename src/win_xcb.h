@@ -44,4 +44,4 @@ void lower(int wid);
 
 char *get_events(int wid);
 
-char *get_generic_events();
+char *get_root_events();

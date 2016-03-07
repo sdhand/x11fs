@@ -109,21 +109,21 @@ void focus(int wid)
 	xcb_flush(conn);
 }
 
-//Simple function to avoid code re-use; gets the properties of a window (title, class etc)
+//Get the properties of a window (title, class etc)
 static xcb_get_property_reply_t *get_prop(int wid, xcb_atom_t property, xcb_atom_t type)
 {
 	xcb_get_property_cookie_t prop_c = xcb_get_property(conn, 0, wid, property, type, 0L, 32L);
 	return xcb_get_property_reply(conn, prop_c, NULL);
 }
 
-//Simple function to avoid code re-use; get's the geometry of a window
+//Get the geometry of a window
 static xcb_get_geometry_reply_t *get_geom(int wid)
 {
 	xcb_get_geometry_cookie_t geom_c = xcb_get_geometry(conn, wid);
 	return xcb_get_geometry_reply(conn, geom_c, NULL);
 }
 
-//Simple function to avoid code re-use; gets the attributes of a window (mapped, ignored etc)
+//Get the attributes of a window (mapped, ignored etc)
 static xcb_get_window_attributes_reply_t *get_attr(int wid)
 {
 	xcb_get_window_attributes_cookie_t attr_c = xcb_get_window_attributes(conn, wid);
@@ -342,4 +342,9 @@ char *get_events(int wid){
 	const static uint32_t stop[] = {0};
 	xcb_change_window_attributes (conn, wid, XCB_CW_EVENT_MASK, stop);
 	return event_string;
+}
+
+char *get_root_events()
+{
+	return get_events(scrn->root);
 }

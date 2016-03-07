@@ -94,11 +94,16 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 			else
 				stbuf->st_nlink = 1;
 			stbuf->st_mode = x11fs_files[i].mode;
-		
+
+			//Set the size of a file by getting its contents
+			//If the file uses direct IO (it acts like a stream, just set size to 0)		
 			stbuf->st_size = 0;
 			if((x11fs_files[i].read != NULL) && !(x11fs_files[i].direct_io))
 			{
 				char *read_string=x11fs_files[i].read(wid);
+				if(read_string==NULL)
+					return errno;
+
 				stbuf->st_size=strlen(read_string);
 				free(read_string);
 			}
@@ -253,7 +258,7 @@ static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, st
 			//Call the read function and stick the results in the buffer
 			char *result= x11fs_files[i].read(wid);
 			if(result == NULL)
-				return 0;
+				return errno;
 
 			size_t len = strlen(result);
 			if(size > len)
@@ -291,7 +296,7 @@ static int x11fs_write(const char *path, const char *buf, size_t size, off_t off
 			x11fs_files[i].write(wid, buf);
 		}
 	}
-	return 0;
+	return size;
 }
 
 //Delete a folder (closes a window)
