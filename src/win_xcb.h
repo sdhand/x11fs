@@ -42,6 +42,4 @@ char **get_class(int wid);
 void raise(int wid);
 void lower(int wid);
 
-char *get_events(int wid);
-
-char *get_root_events();
+char *get_events();

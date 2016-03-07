@@ -19,7 +19,7 @@ struct x11fs_file{
 	bool direct_io;
 	bool dir;
 	char *(*read)(int wid);
-	void (*write)(int wid, const char *buf);	
+	void (*write)(int wid, const char *buf);
 };
 
 
@@ -40,9 +40,8 @@ static const struct x11fs_file x11fs_files[] = {
 			{"/0x*/stack", S_IFREG | 0200, false, false, NULL, stack_write},
 			{"/0x*/title", S_IFREG | 0400, false, false, title_read, NULL},
 			{"/0x*/class", S_IFREG | 0400, false, false, class_read, NULL},
-			{"/0x*/event", S_IFREG | 0400, true, false, event_read, NULL},
 		{"/focused", S_IFREG | 0600, false, false, focused_read, focused_write},
-		{"/event", S_IFREG | 0400, true, false, generic_event_read, NULL},
+		{"/event", S_IFREG | 0400, true, false, event_read, NULL},
 };
 
 //Pull out the id of a window from a path

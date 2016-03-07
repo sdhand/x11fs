@@ -165,7 +165,7 @@ char *class_read(int wid)
 
 char *event_read(int wid)
 {
-	return get_events(wid);
+	return get_events();
 }
 
 char *focused_read(int wid)
@@ -180,9 +180,4 @@ void focused_write(int wid, const char *buf)
 {
 	(void) wid;
 	focus(atoi(buf));
-}
-
-char *generic_event_read(int wid)
-{
-	return get_root_events();
 }

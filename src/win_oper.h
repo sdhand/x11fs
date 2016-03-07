@@ -41,6 +41,3 @@ char *event_read(int wid);
 
 char *focused_read(int wid);
 void focused_write(int wid, const char *buf);
-
-
-char *generic_event_read(int wid);

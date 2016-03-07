@@ -317,34 +317,83 @@ void lower(int wid)
     xcb_flush(conn);
 }
 
-//Get events for a window
-char *get_events(int wid){
-	const static uint32_t values[] = {33554431};
-	xcb_change_window_attributes (conn, wid, XCB_CW_EVENT_MASK, values);
-	xcb_flush(conn);
-	xcb_generic_event_t *event;
-	/*char *events=NULL;
-	while((event=xcb_poll_for_event (conn))!=NULL){
-		int len=0;
-		if(events!=NULL)
-			len=strlen(events);
-		events=realloc(events, len+4);
-		sprintf(events+len, "%d\n", (event->response_type & ~0x80));
-		free(event);
-	}*/
-	event=xcb_wait_for_event(conn);
-	char *event_string=NULL;
-	if(event!=NULL){
-		event_string=malloc(4);
-		sprintf(event_string, "%d\n", (event->response_type & ~0x80));
-	}
-	free(event);
-	const static uint32_t stop[] = {0};
-	xcb_change_window_attributes (conn, wid, XCB_CW_EVENT_MASK, stop);
-	return event_string;
+static void unsubscribe(int wid){
+	uint32_t values[] = {XCB_EVENT_MASK_NO_EVENT};
+	xcb_change_window_attributes(conn, wid, XCB_CW_EVENT_MASK, values);
 }
 
-char *get_root_events()
-{
-	return get_events(scrn->root);
+static void subscribe(int wid){
+	uint32_t values[] = {XCB_EVENT_MASK_ENTER_WINDOW|XCB_EVENT_MASK_LEAVE_WINDOW};
+	xcb_change_window_attributes(conn, wid, XCB_CW_EVENT_MASK, values);
+}
+
+//Get events for a window
+char *get_events(){
+	//Subscribe to events from all windows
+	uint32_t values[] = {XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY};
+	xcb_change_window_attributes(conn, scrn->root, XCB_CW_EVENT_MASK, values);
+	int *windows=list_windows();
+	int wid;
+	while((wid=*(windows++))){
+		if(!get_ignored(wid))
+			subscribe(wid);
+	}
+	xcb_flush(conn);
+
+	char *event_string;
+	bool done;	
+	while(!done){
+		xcb_generic_event_t *event = xcb_wait_for_event(conn);
+		int wid;
+		switch (event->response_type & ~0x80){
+			case XCB_CREATE_NOTIFY:
+				wid=((xcb_create_notify_event_t*)event)->window;
+				event_string=malloc(snprintf(NULL, 0, "CREATE: 0x%08x\n", wid)+1);
+				sprintf(event_string, "CREATE: 0x%08x\n", wid);
+				done=true;
+				break;
+
+			case XCB_DESTROY_NOTIFY:
+				wid=((xcb_create_notify_event_t*)event)->window;
+				event_string=malloc(snprintf(NULL, 0, "DESTROY: 0x%08x\n", wid)+1);
+				sprintf(event_string, "DESTROY: 0x%08x\n", wid);
+				done=true;
+				break;
+
+			case XCB_ENTER_NOTIFY:
+				wid = ((xcb_enter_notify_event_t*)event)->event;
+				event_string=malloc(snprintf(NULL, 0, "ENTER: 0x%08x\n", wid)+1);
+				sprintf(event_string, "ENTER: 0x%08x\n", wid);
+				done=true;
+				break;
+
+			case XCB_LEAVE_NOTIFY:
+				wid = ((xcb_enter_notify_event_t*)event)->event;
+				event_string=malloc(snprintf(NULL, 0, "LEAVE: 0x%08x\n", wid)+1);
+				sprintf(event_string, "LEAVE: 0x%08x\n", wid);
+				done=true;
+				break;
+
+			case XCB_MAP_NOTIFY:
+				wid = ((xcb_map_notify_event_t*)event)->window;
+				event_string=malloc(snprintf(NULL, 0, "MAP: 0x%08x\n", wid)+1);
+				sprintf(event_string, "MAP: 0x%08x\n", wid);
+				done=true;
+				break;
+
+			case XCB_UNMAP_NOTIFY:
+				wid = ((xcb_map_notify_event_t*)event)->window;
+				event_string=malloc(snprintf(NULL, 0, "UNMAP: 0x%08x\n", wid)+1);
+				sprintf(event_string, "UNMAP: 0x%08x\n", wid);
+				done=true;
+				break;
+		}
+	}
+	//Unsubscribe from events
+	unsubscribe(scrn->root);
+	while((wid=*(windows++))){
+		unsubscribe(wid);
+	}
+
+	return event_string;
 }
