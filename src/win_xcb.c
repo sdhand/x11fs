@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <xcb/xcb_icccm.h>
 #include "x11fs.h"
 
 //Our connection to xcb and our screen
@@ -75,11 +76,42 @@ int *list_windows()
 	return win_list;
 }
 
-//This is a terrible way to close windows
-//TODO: use EWMH atoms here to get the window to close rather than just killing it
+static xcb_atom_t xcb_atom_get(xcb_connection_t *conn, char *name)
+{
+	xcb_intern_atom_cookie_t cookie = xcb_intern_atom(conn ,0, strlen(name), name);
+	xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, cookie, NULL);
+
+	if(!reply)
+		return XCB_ATOM_STRING;
+
+	return reply->atom;
+}
+
 void close_window(int wid)
 {
-	xcb_kill_client(conn, wid);
+	xcb_icccm_get_wm_protocols_reply_t reply;
+	bool supports_delete = false;
+	if (xcb_icccm_get_wm_protocols_reply(conn, xcb_icccm_get_wm_protocols(conn, wid, xcb_atom_get(conn, "WM_PROTOCOLS")), &reply, NULL)) {
+		for (int i = 0; i != reply.atoms_len; ++i){
+			if(reply.atoms[i] == xcb_atom_get(conn, "WM_DELETE_WINDOW")){
+				supports_delete=true;
+				break;
+			}
+		}
+	}
+	if(supports_delete){
+		xcb_client_message_event_t ev;
+		ev.response_type = XCB_CLIENT_MESSAGE;
+		ev.sequence = 0;
+		ev.format = 32;
+		ev.window = wid;
+		ev.type = xcb_atom_get(conn, "WM_PROTOCOLS");
+		ev.data.data32[0] = xcb_atom_get(conn, "WM_DELETE_WINDOW");
+		ev.data.data32[1] = XCB_CURRENT_TIME;
+
+		xcb_send_event(conn, 0, wid, XCB_EVENT_MASK_NO_EVENT, (char *)&ev);
+	}else
+		xcb_kill_client(conn, wid);
 	xcb_flush(conn);
 }
 
