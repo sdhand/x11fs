@@ -26,6 +26,10 @@ struct x11fs_file{
 //Our file layout
 static const struct x11fs_file x11fs_files[] = {
 	{"/", S_IFDIR | 0700, false, true, NULL, NULL},
+		{"/root", S_IFDIR | 0700, false, true, NULL, NULL},
+			{"/root/geometry", S_IFDIR | 0700, false, true, NULL, NULL},
+				{"/root/geometry/width", S_IFREG | 0600, false, false, root_width_read, NULL},
+				{"/root/geometry/height", S_IFREG | 0600, false, false, root_height_read,  NULL},
 		{"/0x*", S_IFDIR | 0700, false, true, NULL, NULL},
 			{"/0x*/border", S_IFDIR | 0700, false, true, NULL, NULL},
 				{"/0x*/border/color", S_IFREG | 0200, false, false, NULL, border_color_write},

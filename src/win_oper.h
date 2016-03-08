@@ -1,5 +1,9 @@
 #pragma once
 #include <unistd.h>
+
+char *root_width_read(int wid);
+char *root_height_read(int wid);
+
 void border_color_write(int wid, const char *buf);
 
 char *border_width_read(int wid);

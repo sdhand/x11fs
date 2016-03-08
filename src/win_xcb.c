@@ -98,6 +98,8 @@ int focused()
 		return -1;
 
 	int focused = focus_r->focus;
+	if(focused==scrn->root)
+		focused=0;
 	free(focus_r);
 	return focused;
 }
@@ -135,6 +137,8 @@ static xcb_get_window_attributes_reply_t *get_attr(int wid)
 
 int get_width(int wid)
 {
+	if(wid==-1)
+		wid=scrn->root;
 	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
 	if(geom_r == NULL)
 		return -1;
@@ -153,6 +157,8 @@ void set_width(int wid, int width)
 
 int get_height(int wid)
 {
+	if(wid==-1)
+		wid=scrn->root;
 	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
 	if(geom_r == NULL)
 		return -1;

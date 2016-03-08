@@ -31,6 +31,34 @@ void border_width_write(int wid, const char *buf)
 	set_border_width(wid, atoi(buf));
 }
 
+char *root_width_read(int wid)
+{
+	(void) wid;
+	int width=get_width(-1);
+	if(width==-1){
+		errno = -EIO;
+		return NULL;
+	}
+
+	char *width_string=malloc(snprintf(NULL, 0, "%d\n", width)+1);
+	sprintf(width_string, "%d\n", width);
+	return width_string;
+}
+
+ char *root_height_read(int wid)
+{
+	(void) wid;
+	int height = get_height(-1);
+	if(height==-1){
+		errno=-EIO;
+		return NULL;
+	}
+
+	char *height_string=malloc(snprintf(NULL, 0, "%d\n", height)+1);
+	sprintf(height_string, "%d\n", height);
+	return height_string;
+}
+
 char *geometry_width_read(int wid)
 {
 	int width=get_width(wid);
@@ -171,8 +199,15 @@ char *event_read(int wid)
 char *focused_read(int wid)
 {
 	(void) wid;
-	char *focusedwin = malloc(WID_STRING_LENGTH+1);
-	sprintf(focusedwin, "0x%08x\n", focused());
+	char *focusedwin;
+	int focusedid=focused();
+	if(focusedid){
+		focusedwin = malloc(WID_STRING_LENGTH+1);
+		sprintf(focusedwin, "0x%08x\n", focusedid);
+	}else{
+		focusedwin = malloc(6);
+		sprintf(focusedwin, "root\n");
+	}
 	return focusedwin;
 }
 
