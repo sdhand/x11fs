@@ -214,5 +214,5 @@ char *focused_read(int wid)
 void focused_write(int wid, const char *buf)
 {
 	(void) wid;
-	focus(atoi(buf));
+	focus(strtol(buf, NULL, 16));
 }
