@@ -13,4 +13,10 @@ Installation can be done by invoking make install.
 
 Usage:
 
-See the wiki (http://github.com/sdhand/x11fs/wiki) for more information.
+See the wiki (https://github.com/sdhand/x11fs/wiki) for more information.
+
+
+Thanks to:
+
+Luiz De Milon (https://github.com/kori) for helping to come up with the initial idea.
+The creators of wmutils (https://wmutils.io) for providing some inspiration, and some basic xcb code to study.
