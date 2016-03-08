@@ -10,7 +10,7 @@
 
 void border_color_write(int wid, const char *buf)
 {
-	set_border_color(wid, atoi(buf));
+	set_border_color(wid, strtol(buf, NULL, 16));
 }
 
 char *border_width_read(int wid)
