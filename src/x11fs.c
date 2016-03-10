@@ -334,7 +334,7 @@ static struct fuse_operations x11fs_operations = {
 int main(int argc, char **argv)
 {
 	if(xcb_init()!=X11FS_SUCCESS){
-		fprintf(stderr, "Failed to setup xcb. Quiting...\n");
+		fputs("Failed to setup xcb. Quiting...\n", stderr);
 		return 1;
 	}
 	return fuse_main(argc, argv, &x11fs_operations, NULL);
