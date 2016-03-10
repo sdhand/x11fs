@@ -80,20 +80,17 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 	memset(stbuf, 0, sizeof(struct stat));
 
 	//loop through our filesystem layout and check if the path matches one in our layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
 		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
 			//if the path is to a window file, check that the window exists
 			int wid;
-			if((wid=get_winid(path)) != -1){
-				if(!exists(wid))
-					return -ENOENT;
+			if((wid=get_winid(path)) != -1 && !exists(wid)){
+				return -ENOENT;
 			}
 
 			//if a path matches just use the information about the file from the layout
-			if(x11fs_files[i].dir)
-				stbuf->st_nlink = 2;
-			else
-				stbuf->st_nlink = 1;
+			stbuf->st_nlink = x11fs_files[i].dir ? 2 : 1;
 			stbuf->st_mode = x11fs_files[i].mode;
 
 			//Set the size of a file by getting its contents
