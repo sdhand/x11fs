@@ -53,7 +53,7 @@ static int get_winid(const char *path)
 {
 	int wid = -1;
 	//Check if the path is to a window directory or it's contents
-	if(strncmp(path, "/0x", 3) == 0)
+	if(!strncmp(path, "/0x", 3))
 		//Get the id
 		sscanf(path, "/0x%08x", &wid);
 
@@ -82,7 +82,7 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 	//loop through our filesystem layout and check if the path matches one in our layout
 	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
 	for(size_t i=0; i<files_length; i++){
-		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
+		if(!fnmatch(x11fs_files[i].path, path, FNM_PATHNAME)){
 			//if the path is to a window file, check that the window exists
 			int wid;
 			if((wid=get_winid(path)) != -1 && !exists(wid)){
@@ -99,7 +99,7 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 			if((x11fs_files[i].read != NULL) && !(x11fs_files[i].direct_io))
 			{
 				char *read_string=x11fs_files[i].read(wid);
-				if(read_string==NULL)
+				if(!read_string)
 					return errno;
 
 				stbuf->st_size=strlen(read_string);
@@ -150,18 +150,18 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 		int len = !strcmp(path, "/") ? 0 : strlen(path);
 
 		//If the file exists in our layout
-		if(strncmp(path, matchpath, strlen(path)) == 0){
+		if(!strncmp(path, matchpath, strlen(path))){
 			exists = true;
 
 			//Check that to see if an element in our layout is directly below the folder we're looking at in the heirarchy
 			//If so add it to the directory listing
 			if((strlen(matchpath) > strlen(path))
 					&& ((matchpath+len)[0] == '/')
-					&& (strchr(matchpath+len+1, '/') == NULL)){
+					&& !strchr(matchpath+len+1, '/')){
 				dir = true;
 
 				//If it's a wildcarded window in our layout with the list of actual windows
-				if(strcmp(matchpath, "/0x*") == 0){
+				if(!strcmp(matchpath, "/0x*")){
 					//Get the list of windows
 					int *wins = list_windows();
 
@@ -209,7 +209,7 @@ static int x11fs_open(const char *path, struct fuse_file_info *fi)
 	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
 	for(size_t i=0; i<files_length; i++){
 		//If our file is in the layout
-		 if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
+		 if(!fnmatch(x11fs_files[i].path, path, FNM_PATHNAME)){
 			//If the path is to a window check it exists
 			int wid;
 			if((wid=get_winid(path)) != -1 && !exists(wid)){
@@ -235,7 +235,7 @@ static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, st
 	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
 	for(size_t i=0; i<files_length; i++){
 		//If our file is in the layout
-		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
+		if(!fnmatch(x11fs_files[i].path, path, FNM_PATHNAME)){
 			//If the path is to a window check it exists
 			int wid;
 			if((wid=get_winid(path)) != -1 && !exists(wid)){
@@ -246,12 +246,12 @@ static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, st
 			if(x11fs_files[i].dir)
 				return -EISDIR;
 
-			if(x11fs_files[i].read == NULL)
+			if(!x11fs_files[i].read)
 				return -EACCES;
 
 			//Call the read function and stick the results in the buffer
 			char *result= x11fs_files[i].read(wid);
-			if(result == NULL)
+			if(!result)
 				return errno;
 
 			size_t len = strlen(result);
@@ -272,7 +272,7 @@ static int x11fs_write(const char *path, const char *buf, size_t size, off_t off
 	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
 	for(size_t i=0; i<files_length; i++){
 		//If our file is in the layout
-		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
+		if(!fnmatch(x11fs_files[i].path, path, FNM_PATHNAME)){
 			//If the path is to a window check it exists
 			int wid;
 			if((wid=get_winid(path)) != -1 && !exists(wid)){
@@ -283,7 +283,7 @@ static int x11fs_write(const char *path, const char *buf, size_t size, off_t off
 			if(x11fs_files[i].dir)
 				return -EISDIR;
 
-			if(x11fs_files[i].write == NULL)
+			if(!x11fs_files[i].write)
 				return -EACCES;
 
 			//Call the write function
