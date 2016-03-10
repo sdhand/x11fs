@@ -206,14 +206,14 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 static int x11fs_open(const char *path, struct fuse_file_info *fi)
 {
 	//Iterate through our layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
 		//If our file is in the layout
 		 if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
 			//If the path is to a window check it exists
 			int wid;
-			if((wid=get_winid(path)) != -1){
-				if(!exists(wid))
-					return -ENOENT;
+			if((wid=get_winid(path)) != -1 && !exists(wid)){
+				return -ENOENT;
 			}
 
 			//Check if open makes sense
@@ -232,14 +232,14 @@ static int x11fs_open(const char *path, struct fuse_file_info *fi)
 static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	//Iterate through our layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
 		//If our file is in the layout
 		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
 			//If the path is to a window check it exists
 			int wid;
-			if((wid=get_winid(path)) != -1){
-				if(!exists(wid))
-					return -ENOENT;
+			if((wid=get_winid(path)) != -1 && !exists(wid)){
+				return -ENOENT;
 			}
 
 			//Check we can actually read
@@ -269,14 +269,14 @@ static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, st
 static int x11fs_write(const char *path, const char *buf, size_t size, off_t offset,  struct fuse_file_info *fi)
 {
 	//Iterate through our layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
 		//If our file is in the layout
 		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
 			//If the path is to a window check it exists
 			int wid;
-			if((wid=get_winid(path)) != -1){
-				if(!exists(wid))
-					return -ENOENT;
+			if((wid=get_winid(path)) != -1 && !exists(wid)){
+				return -ENOENT;
 			}
 
 			//Check we can actually read
@@ -300,10 +300,7 @@ static int x11fs_rmdir(const char *path)
 	//Returning ENOSYS because sometimes this will be on a dir, just not one that represents a window
 	//TODO: Probably return more meaningful errors
 	int wid;
-	if((wid=get_winid(path)) == -1)
-		return -ENOSYS;
-
-	if(strlen(path)>11)
+	if((wid=get_winid(path)) == -1 || strlen(path)>11)
 		return -ENOSYS;
 
 	//Close the window
