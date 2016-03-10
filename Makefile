@@ -28,10 +28,10 @@ x11fs: $(BINDIR) $(OBJ)
 	$(LD) $(OBJ) $(LIBS) -o $(BINDIR)/$@
 
 install: x11fs
-	cp $(BINDIR)/x11fs $(PREFIX)/bin/
+	cp $(BINDIR)/x11fs $(DESTDIR)$(PREFIX)/bin/
 
 uninstall:
-	rm $(PREFIX)/bin/x11fs
+	rm $(DESTDIR)$(PREFIX)/bin/x11fs
 
 clean:
 	rm $(OBJDIR)/*.o
