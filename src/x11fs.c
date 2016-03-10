@@ -90,7 +90,7 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 			}
 
 			//if a path matches just use the information about the file from the layout
-			stbuf->st_nlink = x11fs_files[i].dir ? 2 : 1;
+			stbuf->st_nlink = 2 - !x11fs_files[i].dir;
 			stbuf->st_mode = x11fs_files[i].mode;
 
 			//Set the size of a file by getting its contents
