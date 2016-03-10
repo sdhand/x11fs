@@ -137,9 +137,9 @@ void ignored_write(int wid, const char *buf)
 
 void stack_write(int wid, const char *buf)
 {
-	if(strcmp(buf, "raise\n") == 0)
+	if(!strcmp(buf, "raise\n"))
 		raise(wid);
-	if(strcmp(buf, "lower\n") == 0)
+	if(!strcmp(buf, "lower\n"))
 		lower(wid);
 }
 
