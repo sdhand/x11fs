@@ -45,7 +45,7 @@ char *root_width_read(int wid)
 	return width_string;
 }
 
- char *root_height_read(int wid)
+char *root_height_read(int wid)
 {
 	(void) wid;
 	int height = get_height(-1);
@@ -101,11 +101,11 @@ char *geometry_x_read(int wid)
     if(x==-1){
         errno = -EIO;
         return NULL;
-    }   
+    }
 
     char *x_string=malloc(snprintf(NULL, 0, "%d\n", x)+1);
     sprintf(x_string, "%d\n", x);
-    return x_string;	
+    return x_string;
 }
 
 void geometry_x_write(int wid, const char *buf)
@@ -119,7 +119,7 @@ char *geometry_y_read(int wid)
     if(y==-1){
         errno = -EIO;
         return NULL;
-    }   
+    }
 
     char *y_string=malloc(snprintf(NULL, 0, "%d\n", y)+1);
     sprintf(y_string, "%d\n", y);
