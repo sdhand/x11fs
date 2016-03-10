@@ -127,10 +127,7 @@ void mapped_write(int wid, const char *buf)
 
 char *ignored_read(int wid)
 {
-	if(get_ignored(wid))
-		return strdup("true\n");
-	else
-		return strdup("false\n");
+	return strdup(get_ignored(wid) ? "true\n" : "false\n");
 }
 
 void ignored_write(int wid, const char *buf)
