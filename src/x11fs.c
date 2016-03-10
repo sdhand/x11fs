@@ -122,9 +122,8 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 	//If the path is to a non existant window says so
 	int wid;
-	if((wid = get_winid(path)) != -1){
-		if(!exists(wid))
-			return -ENOENT;
+	if((wid = get_winid(path)) != -1 && !exists(wid)){
+		return -ENOENT;
 	}
 
 	bool exists = false;
@@ -132,7 +131,8 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 
 	//Iterate through our filesystem layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
 
 		//If the path was to a window replace the wildcard in the layout with the actual window we're looking at
 		char *matchpath;
@@ -147,11 +147,7 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 		//As the path for the root directory is just a / with no text we need to treat it as being 0 length
 		//This is for when we check if something in our layout is in the folder we're looking at, but not in a subfolder
-		int len;
-		if(strcmp(path, "/") == 0)
-			len = 0;
-		else
-			len = strlen(path);
+		int len = !strcmp(path, "/") ? 0 : strlen(path);
 
 		//If the file exists in our layout
 		if(strncmp(path, matchpath, strlen(path)) == 0){
