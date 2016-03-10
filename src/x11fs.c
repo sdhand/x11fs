@@ -51,11 +51,13 @@ static const struct x11fs_file x11fs_files[] = {
 //Pull out the id of a window from a path
 static int get_winid(const char *path)
 {
-	int wid = -1;
+	int wid = 0;
 	//Check if the path is to a window directory or it's contents
 	if(!strncmp(path, "/0x", 3))
 		//Get the id
 		sscanf(path, "/0x%08x", &wid);
+	else
+		wid = -1;
 
 	return wid;
 }
