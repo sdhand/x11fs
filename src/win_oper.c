@@ -117,10 +117,7 @@ void geometry_y_write(int wid, const char *buf)
 
 char *mapped_read(int wid)
 {
-	if(get_mapped(wid))
-		return strdup("true\n");
-	else
-		return strdup("false\n");
+	return strdup(get_mapped(wid) ? "true\n" : "false\n");
 }
 
 void mapped_write(int wid, const char *buf)
