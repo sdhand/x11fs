@@ -69,7 +69,7 @@ static void x11fs_destroy()
 //Doesn't actually do anything but it's required we implement this as it will get called when writing a value to a file that's shorter than the current contents
 static int x11fs_truncate(const char *path, off_t size)
 {
-	return 0;	
+	return 0;
 }
 
 
@@ -97,7 +97,7 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 			stbuf->st_mode = x11fs_files[i].mode;
 
 			//Set the size of a file by getting its contents
-			//If the file uses direct IO (it acts like a stream, just set size to 0)		
+			//If the file uses direct IO (it acts like a stream, just set size to 0)
 			stbuf->st_size = 0;
 			if((x11fs_files[i].read != NULL) && !(x11fs_files[i].direct_io))
 			{
@@ -108,7 +108,7 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 				stbuf->st_size=strlen(read_string);
 				free(read_string);
 			}
-			
+
 			return 0;
 		}
 	}
@@ -197,7 +197,7 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 	if(!exists)
 		return -ENOENT;
-	
+
 	//Add any extra needed elements to the directory list
 	if(dir){
 		filler(buf, ".", NULL, 0);
@@ -248,7 +248,7 @@ static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, st
 				if(!exists(wid))
 					return -ENOENT;
 			}
-			
+
 			//Check we can actually read
 			if(x11fs_files[i].dir)
 				return -EISDIR;
@@ -309,7 +309,7 @@ static int x11fs_rmdir(const char *path)
 	int wid;
 	if((wid=get_winid(path)) == -1)
 		return -ENOSYS;
-	
+
 	if(strlen(path)>11)
 		return -ENOSYS;
 
