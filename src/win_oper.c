@@ -132,10 +132,7 @@ char *ignored_read(int wid)
 
 void ignored_write(int wid, const char *buf)
 {
-	if(strcmp(buf, "true\n") == 0)
-		set_ignored(wid, true);
-	if(strcmp(buf, "false\n") == 0)
-		set_ignored(wid, false);
+	set_ignored(wid, !strcmp(buf, "true\n"));
 }
 
 void stack_write(int wid, const char *buf)
