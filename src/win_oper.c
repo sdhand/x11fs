@@ -34,29 +34,13 @@ void border_width_write(int wid, const char *buf)
 char *root_width_read(int wid)
 {
 	(void) wid;
-	int width=get_width(-1);
-	if(width==-1){
-		errno = -EIO;
-		return NULL;
-	}
-
-	char *width_string=malloc(snprintf(NULL, 0, "%d\n", width)+1);
-	sprintf(width_string, "%d\n", width);
-	return width_string;
+	return geometry_width_read(-1);
 }
 
 char *root_height_read(int wid)
 {
 	(void) wid;
-	int height = get_height(-1);
-	if(height==-1){
-		errno=-EIO;
-		return NULL;
-	}
-
-	char *height_string=malloc(snprintf(NULL, 0, "%d\n", height)+1);
-	sprintf(height_string, "%d\n", height);
-	return height_string;
+	return geometry_height_read(-1);
 }
 
 char *geometry_width_read(int wid)
