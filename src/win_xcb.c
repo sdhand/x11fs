@@ -22,7 +22,7 @@ X11FS_STATUS xcb_init()
 	}
 
 	scrn = xcb_setup_roots_iterator(xcb_get_setup(conn)).data;
-	if(scrn == NULL){
+	if(!scrn){
 		warnx("Cannot retrieve screen information");
 		return X11FS_FAILURE;
 	}
@@ -31,7 +31,7 @@ X11FS_STATUS xcb_init()
 
 //End our connection
 void xcb_cleanup(){
-	if(conn != NULL)
+	if(conn)
 		xcb_disconnect(conn);
 }
 
@@ -41,7 +41,7 @@ bool exists(int wid)
 	xcb_get_window_attributes_cookie_t attr_c = xcb_get_window_attributes(conn, wid);
 	xcb_get_window_attributes_reply_t *attr_r = xcb_get_window_attributes_reply(conn, attr_c, NULL);
 
-	if(attr_r == NULL)
+	if(!attr_r)
 		return false;
 
 	free(attr_r);
@@ -55,12 +55,12 @@ int *list_windows()
 	xcb_query_tree_cookie_t tree_c = xcb_query_tree(conn, scrn->root);
 	xcb_query_tree_reply_t *tree_r = xcb_query_tree_reply(conn, tree_c, NULL);
 
-	if(tree_r == NULL)
+	if(!tree_r)
 		warnx("Couldn't find the root window's");
 
 	//Get the array of windows
 	xcb_window_t *xcb_win_list = xcb_query_tree_children(tree_r);
-	if(xcb_win_list == NULL)
+	if(!xcb_win_list)
 		warnx("Couldn't find the root window's children");
 
 	int *win_list = malloc(sizeof(int)*(tree_r->children_len+1));
@@ -126,7 +126,7 @@ int focused()
 	focus_r = xcb_get_input_focus_reply(conn, focus_c, NULL);
 
 	//Couldn't find the focused window
-	if(focus_r == NULL)
+	if(!focus_r)
 		return -1;
 
 	int focused = focus_r->focus;
@@ -172,7 +172,7 @@ int get_width(int wid)
 	if(wid==-1)
 		wid=scrn->root;
 	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-	if(geom_r == NULL)
+	if(!geom_r)
 		return -1;
 
 	int width = geom_r->width;
@@ -192,7 +192,7 @@ int get_height(int wid)
 	if(wid==-1)
 		wid=scrn->root;
 	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-	if(geom_r == NULL)
+	if(!geom_r)
 		return -1;
 
 	int height = geom_r->height;
@@ -210,7 +210,7 @@ void set_height(int wid, int height)
 int get_x(int wid)
 {
 	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-	if(geom_r == NULL)
+	if(!geom_r)
 		return -1;
 
 	int x = geom_r->x;
@@ -228,7 +228,7 @@ void set_x(int wid, int x)
 int get_y(int wid)
 {
     xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-    if(geom_r == NULL)
+    if(!geom_r)
         return -1; 
 
     int y = geom_r->y;
@@ -246,7 +246,7 @@ void set_y(int wid, int y)
 int get_border_width(int wid)
 {
     xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-    if(geom_r == NULL)
+    if(!geom_r)
         return -1; 
 
     int bw = geom_r->border_width;
@@ -271,7 +271,7 @@ void set_border_color(int wid, int color)
 int get_mapped(int wid)
 {
     xcb_get_window_attributes_reply_t *attr_r = get_attr(wid);
-    if(attr_r == NULL)
+    if(!attr_r)
         return -1; 
 
     int map_state = attr_r->map_state;
@@ -294,7 +294,7 @@ void set_mapped(int wid, int mapstate)
 int get_ignored(int wid)
 {
     xcb_get_window_attributes_reply_t *attr_r = get_attr(wid);
-    if(attr_r == NULL)
+    if(!attr_r)
         return -1;
 
     int or = attr_r->override_redirect;
@@ -311,7 +311,7 @@ void set_ignored(int wid, int ignore)
 char *get_title(int wid)
 {
     xcb_get_property_reply_t *prop_r = get_prop(wid, XCB_ATOM_WM_NAME, XCB_ATOM_STRING);
-    if(prop_r == NULL)
+    if(!prop_r)
         return NULL;
 
     char *title = (char *) xcb_get_property_value(prop_r);
@@ -327,7 +327,7 @@ char **get_class(int wid)
 {
     char **classes = malloc(sizeof(char*)*2);
     xcb_get_property_reply_t *prop_r = get_prop(wid, XCB_ATOM_WM_CLASS, XCB_ATOM_STRING);
-    if(prop_r == NULL) {
+    if(!prop_r) {
         free(classes);
         return NULL;
     }
