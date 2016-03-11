@@ -229,7 +229,7 @@ int get_y(int wid)
 {
     xcb_get_geometry_reply_t *geom_r = get_geom(wid);
     if(!geom_r)
-        return -1; 
+        return -1;
 
     int y = geom_r->y;
     free(geom_r);
@@ -247,11 +247,11 @@ int get_border_width(int wid)
 {
     xcb_get_geometry_reply_t *geom_r = get_geom(wid);
     if(!geom_r)
-        return -1; 
+        return -1;
 
     int bw = geom_r->border_width;
     free(geom_r);
-    return bw; 
+    return bw;
 }
 
 void set_border_width(int wid, int width)
@@ -272,7 +272,7 @@ int get_mapped(int wid)
 {
     xcb_get_window_attributes_reply_t *attr_r = get_attr(wid);
     if(!attr_r)
-        return -1; 
+        return -1;
 
     int map_state = attr_r->map_state;
     free(attr_r);
@@ -379,7 +379,7 @@ char *get_events(){
 	xcb_flush(conn);
 
 	char *event_string;
-	bool done;	
+	bool done;
 	while(!done){
 		xcb_generic_event_t *event = xcb_wait_for_event(conn);
 		int wid;
