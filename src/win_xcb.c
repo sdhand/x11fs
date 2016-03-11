@@ -383,48 +383,21 @@ char *get_events(){
 	while(!done){
 		xcb_generic_event_t *event = xcb_wait_for_event(conn);
 		int wid;
+		const char * ev_id = NULL;
 		switch (event->response_type & ~0x80){
-			case XCB_CREATE_NOTIFY:
-				wid=((xcb_create_notify_event_t*)event)->window;
-				event_string=malloc(snprintf(NULL, 0, "CREATE: 0x%08x\n", wid)+1);
-				sprintf(event_string, "CREATE: 0x%08x\n", wid);
-				done=true;
-				break;
+			case XCB_CREATE_NOTIFY:  ev_id = "CREATE";  break;
+			case XCB_DESTROY_NOTIFY: ev_id = "DESTROY"; break;
+			case XCB_ENTER_NOTIFY:   ev_id = "ENTER";   break;
+			case XCB_LEAVE_NOTIFY:   ev_id = "LEAVE";   break;
+			case XCB_MAP_NOTIFY:     ev_id = "MAP";     break;
+			case XCB_UNMAP_NOTIFY:   ev_id = "UNMAP";   break;
+		}
 
-			case XCB_DESTROY_NOTIFY:
-				wid=((xcb_create_notify_event_t*)event)->window;
-				event_string=malloc(snprintf(NULL, 0, "DESTROY: 0x%08x\n", wid)+1);
-				sprintf(event_string, "DESTROY: 0x%08x\n", wid);
-				done=true;
-				break;
-
-			case XCB_ENTER_NOTIFY:
-				wid = ((xcb_enter_notify_event_t*)event)->event;
-				event_string=malloc(snprintf(NULL, 0, "ENTER: 0x%08x\n", wid)+1);
-				sprintf(event_string, "ENTER: 0x%08x\n", wid);
-				done=true;
-				break;
-
-			case XCB_LEAVE_NOTIFY:
-				wid = ((xcb_enter_notify_event_t*)event)->event;
-				event_string=malloc(snprintf(NULL, 0, "LEAVE: 0x%08x\n", wid)+1);
-				sprintf(event_string, "LEAVE: 0x%08x\n", wid);
-				done=true;
-				break;
-
-			case XCB_MAP_NOTIFY:
-				wid = ((xcb_map_notify_event_t*)event)->window;
-				event_string=malloc(snprintf(NULL, 0, "MAP: 0x%08x\n", wid)+1);
-				sprintf(event_string, "MAP: 0x%08x\n", wid);
-				done=true;
-				break;
-
-			case XCB_UNMAP_NOTIFY:
-				wid = ((xcb_map_notify_event_t*)event)->window;
-				event_string=malloc(snprintf(NULL, 0, "UNMAP: 0x%08x\n", wid)+1);
-				sprintf(event_string, "UNMAP: 0x%08x\n", wid);
-				done=true;
-				break;
+		if ( ev_id ) {
+			wid = ((xcb_create_notify_event_t * )event)->window;
+			event_string = malloc(snprintf(NULL, 0, "%s: 0x%08x\n", ev_id, wid) + 1);
+			sprintf(event_string, "%s: 0x%08x\n", ev_id, wid);
+			done = true;
 		}
 	}
 	//Unsubscribe from events
