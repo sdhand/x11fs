@@ -28,6 +28,7 @@ x11fs: $(BINDIR) $(OBJ)
 	$(LD) $(OBJ) $(LIBS) -o $(BINDIR)/$@
 
 install: x11fs
+	mkdir -p $(DESTDIR)$(PREFIX)/bin/
 	cp $(BINDIR)/x11fs $(DESTDIR)$(PREFIX)/bin/
 
 uninstall:
