@@ -379,7 +379,7 @@ char *get_events(){
 	xcb_flush(conn);
 
 	char *event_string;
-	bool done;
+	bool done = false;
 	while(!done){
 		xcb_generic_event_t *event = xcb_wait_for_event(conn);
 		int wid;
