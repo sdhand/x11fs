@@ -17,7 +17,7 @@ Usage
 -----
 
 See the [wiki](https://github.com/sdhand/x11fs/wiki) for more information.
-Or go here for a simple example setup: https://github.com/sdhand/x11fs/wiki/Example-Setup
+Or go [here](https://github.com/sdhand/x11fs/wiki/Example-Setup) for a simple example setup.
 
 
 Thanks to
