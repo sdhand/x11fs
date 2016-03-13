@@ -16,12 +16,12 @@ Installation can be done by invoking make install.
 Usage
 -----
 
-See the wiki (https://github.com/sdhand/x11fs/wiki) for more information.
+See the [wiki](https://github.com/sdhand/x11fs/wiki) for more information.
 Or go here for a simple example setup: https://github.com/sdhand/x11fs/wiki/Example-Setup
 
 
 Thanks to
 ---------
 
-Luiz de Milon (https://github.com/kori) for helping to come up with the initial idea.
-The creators of wmutils (https://wmutils.io) for providing some inspiration, and some basic xcb code to study.
+[Luiz de Milon](https://github.com/kori) for helping to come up with the initial idea.
+The creators of [wmutils](https://wmutils.io) for providing some inspiration, and some basic xcb code to study.
