@@ -385,16 +385,38 @@ char *get_events(){
 		int wid;
 		const char * ev_id = NULL;
 		switch (event->response_type & ~0x80){
-			case XCB_CREATE_NOTIFY:  ev_id = "CREATE";  break;
-			case XCB_DESTROY_NOTIFY: ev_id = "DESTROY"; break;
-			case XCB_ENTER_NOTIFY:   ev_id = "ENTER";   break;
-			case XCB_LEAVE_NOTIFY:   ev_id = "LEAVE";   break;
-			case XCB_MAP_NOTIFY:     ev_id = "MAP";     break;
-			case XCB_UNMAP_NOTIFY:   ev_id = "UNMAP";   break;
+			case XCB_CREATE_NOTIFY:
+				ev_id = "CREATE";
+				wid = ((xcb_create_notify_event_t * )event)->window;
+				break;
+
+			case XCB_DESTROY_NOTIFY:
+				ev_id = "DESTROY";
+				wid = ((xcb_destroy_notify_event_t * )event)->window;
+				break;
+
+			case XCB_ENTER_NOTIFY:
+				ev_id = "ENTER";
+				wid = ((xcb_enter_notify_event_t * )event)->event;
+				break;
+
+			case XCB_LEAVE_NOTIFY:
+				ev_id = "LEAVE";
+				wid = ((xcb_leave_notify_event_t * )event)->event;
+				break;
+
+			case XCB_MAP_NOTIFY:
+				ev_id = "MAP";
+				wid = ((xcb_map_notify_event_t * )event)->window;
+				break;
+
+			case XCB_UNMAP_NOTIFY:
+				ev_id = "UNMAP";
+				wid = ((xcb_unmap_notify_event_t * )event)->window;
+				break;
 		}
 
 		if ( ev_id ) {
-			wid = ((xcb_create_notify_event_t * )event)->window;
 			event_string = malloc(snprintf(NULL, 0, "%s: 0x%08x\n", ev_id, wid) + 1);
 			sprintf(event_string, "%s: 0x%08x\n", ev_id, wid);
 			done = true;
