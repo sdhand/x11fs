@@ -167,81 +167,39 @@ static xcb_get_window_attributes_reply_t *get_attr(int wid)
 //Bunch of functions to get and set window properties etc.
 //All should be fairly self explanatory
 
-int get_width(int wid)
-{
-	if(wid==-1)
-		wid=scrn->root;
-	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-	if(!geom_r)
-		return -1;
-
-	int width = geom_r->width;
-	free(geom_r);
-	return width;
+#define DEFINE_NORM_SETTER(name, prop) \
+void set_##name(int wid, int arg) {\
+	uint32_t values[] = {arg};\
+	xcb_configure_window(conn, wid, prop, values);\
+	xcb_flush(conn);\
 }
 
-void set_width(int wid, int width)
-{
-	uint32_t values[] = {width};
-	xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_WIDTH, values);
-	xcb_flush(conn);
+DEFINE_NORM_SETTER(border_width, XCB_CONFIG_WINDOW_BORDER_WIDTH);
+DEFINE_NORM_SETTER(border_color, XCB_CW_BORDER_PIXEL);
+DEFINE_NORM_SETTER(ignored,      XCB_CW_OVERRIDE_REDIRECT);
+DEFINE_NORM_SETTER(width,        XCB_CONFIG_WINDOW_WIDTH);
+DEFINE_NORM_SETTER(height,       XCB_CONFIG_WINDOW_HEIGHT);
+DEFINE_NORM_SETTER(x,            XCB_CONFIG_WINDOW_X);
+DEFINE_NORM_SETTER(y,            XCB_CONFIG_WINDOW_Y);
+
+#define DEFINE_GEOM_GETTER(name) \
+int get_##name(int wid)\
+{\
+	if(wid==-1)\
+		wid=scrn->root;\
+	xcb_get_geometry_reply_t *geom_r = get_geom(wid);\
+	if(!geom_r)\
+		return -1;\
+	\
+	int name = geom_r->name;\
+	free(geom_r);\
+	return name;\
 }
 
-int get_height(int wid)
-{
-	if(wid==-1)
-		wid=scrn->root;
-	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-	if(!geom_r)
-		return -1;
-
-	int height = geom_r->height;
-	free(geom_r);
-	return height;
-}
-
-void set_height(int wid, int height)
-{
-	uint32_t values[] = {height};
-	xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_HEIGHT, values);
-	xcb_flush(conn);
-}
-
-int get_x(int wid)
-{
-	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-	if(!geom_r)
-		return -1;
-
-	int x = geom_r->x;
-	free(geom_r);
-	return x;
-}
-
-void set_x(int wid, int x)
-{
-    uint32_t values[] = {x};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_X, values);
-    xcb_flush(conn);
-}
-
-int get_y(int wid)
-{
-    xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-    if(!geom_r)
-        return -1;
-
-    int y = geom_r->y;
-    free(geom_r);
-    return y;
-}
-
-void set_y(int wid, int y)
-{
-    uint32_t values[] = {y};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_Y, values);
-    xcb_flush(conn);
-}
+DEFINE_GEOM_GETTER(width);
+DEFINE_GEOM_GETTER(height);
+DEFINE_GEOM_GETTER(x);
+DEFINE_GEOM_GETTER(y);
 
 int get_border_width(int wid)
 {
@@ -252,20 +210,6 @@ int get_border_width(int wid)
     int bw = geom_r->border_width;
     free(geom_r);
     return bw;
-}
-
-void set_border_width(int wid, int width)
-{
-    uint32_t values[] = {width};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_BORDER_WIDTH, values);
-    xcb_flush(conn);
-}
-
-void set_border_color(int wid, int color)
-{
-    uint32_t values[] = {color};
-    xcb_change_window_attributes(conn, wid, XCB_CW_BORDER_PIXEL, values);
-    xcb_flush(conn);
 }
 
 int get_mapped(int wid)
@@ -300,12 +244,6 @@ int get_ignored(int wid)
     int or = attr_r->override_redirect;
     free(attr_r);
     return or;
-}
-
-void set_ignored(int wid, int ignore)
-{
-    uint32_t values[] = {ignore};
-    xcb_change_window_attributes(conn, wid, XCB_CW_OVERRIDE_REDIRECT, values);
 }
 
 char *get_title(int wid)
