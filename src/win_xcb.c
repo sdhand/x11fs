@@ -80,11 +80,7 @@ static xcb_atom_t xcb_atom_get(xcb_connection_t *conn, char *name)
 {
 	xcb_intern_atom_cookie_t cookie = xcb_intern_atom(conn ,0, strlen(name), name);
 	xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, cookie, NULL);
-
-	if(!reply)
-		return XCB_ATOM_STRING;
-
-	return reply->atom;
+	return !reply ? XCB_ATOM_STRING : reply->atom;
 }
 
 void close_window(int wid)
@@ -220,10 +216,7 @@ int get_mapped(int wid)
 
     int map_state = attr_r->map_state;
     free(attr_r);
-    if(map_state == XCB_MAP_STATE_VIEWABLE){
-        return 1;
-    }
-    return 0;
+    return map_state == XCB_MAP_STATE_VIEWABLE;
 }
 
 void set_mapped(int wid, int mapstate)
