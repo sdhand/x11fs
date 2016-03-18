@@ -163,20 +163,20 @@ static xcb_get_window_attributes_reply_t *get_attr(int wid)
 //Bunch of functions to get and set window properties etc.
 //All should be fairly self explanatory
 
-#define DEFINE_NORM_SETTER(name, prop) \
+#define DEFINE_NORM_SETTER(name, fn, prop) \
 void set_##name(int wid, int arg) {\
 	uint32_t values[] = {arg};\
-	xcb_configure_window(conn, wid, prop, values);\
+	fn(conn, wid, prop, values);\
 	xcb_flush(conn);\
 }
 
-DEFINE_NORM_SETTER(border_width, XCB_CONFIG_WINDOW_BORDER_WIDTH);
-DEFINE_NORM_SETTER(border_color, XCB_CW_BORDER_PIXEL);
-DEFINE_NORM_SETTER(ignored,      XCB_CW_OVERRIDE_REDIRECT);
-DEFINE_NORM_SETTER(width,        XCB_CONFIG_WINDOW_WIDTH);
-DEFINE_NORM_SETTER(height,       XCB_CONFIG_WINDOW_HEIGHT);
-DEFINE_NORM_SETTER(x,            XCB_CONFIG_WINDOW_X);
-DEFINE_NORM_SETTER(y,            XCB_CONFIG_WINDOW_Y);
+DEFINE_NORM_SETTER(border_width, xcb_configure_window,         XCB_CONFIG_WINDOW_BORDER_WIDTH);
+DEFINE_NORM_SETTER(border_color, xcb_change_window_attributes, XCB_CW_BORDER_PIXEL);
+DEFINE_NORM_SETTER(ignored,      xcb_change_window_attributes, XCB_CW_OVERRIDE_REDIRECT);
+DEFINE_NORM_SETTER(width,        xcb_configure_window,         XCB_CONFIG_WINDOW_WIDTH);
+DEFINE_NORM_SETTER(height,       xcb_configure_window,         XCB_CONFIG_WINDOW_HEIGHT);
+DEFINE_NORM_SETTER(x,            xcb_configure_window,         XCB_CONFIG_WINDOW_X);
+DEFINE_NORM_SETTER(y,            xcb_configure_window,         XCB_CONFIG_WINDOW_Y);
 
 #define DEFINE_GEOM_GETTER(name) \
 int get_##name(int wid)\
