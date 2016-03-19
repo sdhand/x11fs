@@ -177,6 +177,7 @@ DEFINE_NORM_SETTER(width,        xcb_configure_window,         XCB_CONFIG_WINDOW
 DEFINE_NORM_SETTER(height,       xcb_configure_window,         XCB_CONFIG_WINDOW_HEIGHT);
 DEFINE_NORM_SETTER(x,            xcb_configure_window,         XCB_CONFIG_WINDOW_X);
 DEFINE_NORM_SETTER(y,            xcb_configure_window,         XCB_CONFIG_WINDOW_Y);
+DEFINE_NORM_SETTER(stack_mode,   xcb_configure_window,         XCB_CONFIG_WINDOW_STACK_MODE);
 
 #define DEFINE_GEOM_GETTER(name) \
 int get_##name(int wid)\
@@ -270,20 +271,6 @@ char **get_class(int wid)
 
     free(prop_r);
     return classes;
-}
-
-void raise(int wid)
-{
-    uint32_t values[] = {XCB_STACK_MODE_ABOVE};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_STACK_MODE, values);
-    xcb_flush(conn);
-}
-
-void lower(int wid)
-{
-    uint32_t values[] = {XCB_STACK_MODE_BELOW};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_STACK_MODE, values);
-    xcb_flush(conn);
 }
 
 static void unsubscribe(int wid){
