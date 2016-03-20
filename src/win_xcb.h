@@ -1,6 +1,7 @@
 #pragma once
 #include "x11fs.h"
 #include <stdbool.h>
+#include <xcb/xcb_icccm.h>
 
 X11FS_STATUS xcb_init();
 void xcb_cleanup();
@@ -39,7 +40,10 @@ char *get_title(int wid);
 
 char **get_class(int wid);
 
-void raise(int wid);
-void lower(int wid);
+void set_stack_mode(int wid, int position);
+#define raise(wid) set_stack_mode(wid, XCB_STACK_MODE_ABOVE)
+#define lower(wid) set_stack_mode(wid, XCB_STACK_MODE_BELOW)
+
+void set_subscription(int wid, int eventmask);
 
 char *get_events();

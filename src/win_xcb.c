@@ -22,7 +22,7 @@ X11FS_STATUS xcb_init()
 	}
 
 	scrn = xcb_setup_roots_iterator(xcb_get_setup(conn)).data;
-	if(scrn == NULL){
+	if(!scrn){
 		warnx("Cannot retrieve screen information");
 		return X11FS_FAILURE;
 	}
@@ -31,7 +31,7 @@ X11FS_STATUS xcb_init()
 
 //End our connection
 void xcb_cleanup(){
-	if(conn != NULL)
+	if(conn)
 		xcb_disconnect(conn);
 }
 
@@ -41,7 +41,7 @@ bool exists(int wid)
 	xcb_get_window_attributes_cookie_t attr_c = xcb_get_window_attributes(conn, wid);
 	xcb_get_window_attributes_reply_t *attr_r = xcb_get_window_attributes_reply(conn, attr_c, NULL);
 
-	if(attr_r == NULL)
+	if(!attr_r)
 		return false;
 
 	free(attr_r);
@@ -55,12 +55,12 @@ int *list_windows()
 	xcb_query_tree_cookie_t tree_c = xcb_query_tree(conn, scrn->root);
 	xcb_query_tree_reply_t *tree_r = xcb_query_tree_reply(conn, tree_c, NULL);
 
-	if(tree_r == NULL)
+	if(!tree_r)
 		warnx("Couldn't find the root window's");
 
 	//Get the array of windows
 	xcb_window_t *xcb_win_list = xcb_query_tree_children(tree_r);
-	if(xcb_win_list == NULL)
+	if(!xcb_win_list)
 		warnx("Couldn't find the root window's children");
 
 	int *win_list = malloc(sizeof(int)*(tree_r->children_len+1));
@@ -80,11 +80,7 @@ static xcb_atom_t xcb_atom_get(xcb_connection_t *conn, char *name)
 {
 	xcb_intern_atom_cookie_t cookie = xcb_intern_atom(conn ,0, strlen(name), name);
 	xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, cookie, NULL);
-
-	if(!reply)
-		return XCB_ATOM_STRING;
-
-	return reply->atom;
+	return !reply ? XCB_ATOM_STRING : reply->atom;
 }
 
 void close_window(int wid)
@@ -126,7 +122,7 @@ int focused()
 	focus_r = xcb_get_input_focus_reply(conn, focus_c, NULL);
 
 	//Couldn't find the focused window
-	if(focus_r == NULL)
+	if(!focus_r)
 		return -1;
 
 	int focused = focus_r->focus;
@@ -167,119 +163,52 @@ static xcb_get_window_attributes_reply_t *get_attr(int wid)
 //Bunch of functions to get and set window properties etc.
 //All should be fairly self explanatory
 
-int get_width(int wid)
-{
-	if(wid==-1)
-		wid=scrn->root;
-	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-	if(geom_r == NULL)
-		return -1;
-
-	int width = geom_r->width;
-	free(geom_r);
-	return width;
+#define DEFINE_NORM_SETTER(name, fn, prop) \
+void set_##name(int wid, int arg) {\
+	uint32_t values[] = {arg};\
+	fn(conn, wid, prop, values);\
+	xcb_flush(conn);\
 }
 
-void set_width(int wid, int width)
-{
-	uint32_t values[] = {width};
-	xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_WIDTH, values);
-	xcb_flush(conn);
+DEFINE_NORM_SETTER(border_width, xcb_configure_window,         XCB_CONFIG_WINDOW_BORDER_WIDTH);
+DEFINE_NORM_SETTER(border_color, xcb_change_window_attributes, XCB_CW_BORDER_PIXEL);
+DEFINE_NORM_SETTER(ignored,      xcb_change_window_attributes, XCB_CW_OVERRIDE_REDIRECT);
+DEFINE_NORM_SETTER(width,        xcb_configure_window,         XCB_CONFIG_WINDOW_WIDTH);
+DEFINE_NORM_SETTER(height,       xcb_configure_window,         XCB_CONFIG_WINDOW_HEIGHT);
+DEFINE_NORM_SETTER(x,            xcb_configure_window,         XCB_CONFIG_WINDOW_X);
+DEFINE_NORM_SETTER(y,            xcb_configure_window,         XCB_CONFIG_WINDOW_Y);
+DEFINE_NORM_SETTER(stack_mode,   xcb_configure_window,         XCB_CONFIG_WINDOW_STACK_MODE);
+DEFINE_NORM_SETTER(subscription, xcb_change_window_attributes, XCB_CW_EVENT_MASK);
+
+#define DEFINE_GEOM_GETTER(name) \
+int get_##name(int wid)\
+{\
+	if(wid==-1)\
+		wid=scrn->root;\
+	xcb_get_geometry_reply_t *geom_r = get_geom(wid);\
+	if(!geom_r)\
+		return -1;\
+	\
+	int name = geom_r->name;\
+	free(geom_r);\
+	return name;\
 }
 
-int get_height(int wid)
-{
-	if(wid==-1)
-		wid=scrn->root;
-	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-	if(geom_r == NULL)
-		return -1;
-
-	int height = geom_r->height;
-	free(geom_r);
-	return height;
-}
-
-void set_height(int wid, int height)
-{
-	uint32_t values[] = {height};
-	xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_HEIGHT, values);
-	xcb_flush(conn);
-}
-
-int get_x(int wid)
-{
-	xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-	if(geom_r == NULL)
-		return -1;
-
-	int x = geom_r->x;
-	free(geom_r);
-	return x;
-}
-
-void set_x(int wid, int x)
-{
-    uint32_t values[] = {x};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_X, values);
-    xcb_flush(conn);
-}
-
-int get_y(int wid)
-{
-    xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-    if(geom_r == NULL)
-        return -1; 
-
-    int y = geom_r->y;
-    free(geom_r);
-    return y;
-}
-
-void set_y(int wid, int y)
-{
-    uint32_t values[] = {y};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_Y, values);
-    xcb_flush(conn);
-}
-
-int get_border_width(int wid)
-{
-    xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-    if(geom_r == NULL)
-        return -1; 
-
-    int bw = geom_r->border_width;
-    free(geom_r);
-    return bw; 
-}
-
-void set_border_width(int wid, int width)
-{
-    uint32_t values[] = {width};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_BORDER_WIDTH, values);
-    xcb_flush(conn);
-}
-
-void set_border_color(int wid, int color)
-{
-    uint32_t values[] = {color};
-    xcb_change_window_attributes(conn, wid, XCB_CW_BORDER_PIXEL, values);
-    xcb_flush(conn);
-}
+DEFINE_GEOM_GETTER(width);
+DEFINE_GEOM_GETTER(height);
+DEFINE_GEOM_GETTER(x);
+DEFINE_GEOM_GETTER(y);
+DEFINE_GEOM_GETTER(border_width);
 
 int get_mapped(int wid)
 {
     xcb_get_window_attributes_reply_t *attr_r = get_attr(wid);
-    if(attr_r == NULL)
-        return -1; 
+    if(!attr_r)
+        return -1;
 
     int map_state = attr_r->map_state;
     free(attr_r);
-    if(map_state == XCB_MAP_STATE_VIEWABLE){
-        return 1;
-    }
-    return 0;
+    return map_state == XCB_MAP_STATE_VIEWABLE;
 }
 
 void set_mapped(int wid, int mapstate)
@@ -294,7 +223,7 @@ void set_mapped(int wid, int mapstate)
 int get_ignored(int wid)
 {
     xcb_get_window_attributes_reply_t *attr_r = get_attr(wid);
-    if(attr_r == NULL)
+    if(!attr_r)
         return -1;
 
     int or = attr_r->override_redirect;
@@ -302,16 +231,10 @@ int get_ignored(int wid)
     return or;
 }
 
-void set_ignored(int wid, int ignore)
-{
-    uint32_t values[] = {ignore};
-    xcb_change_window_attributes(conn, wid, XCB_CW_OVERRIDE_REDIRECT, values);
-}
-
 char *get_title(int wid)
 {
     xcb_get_property_reply_t *prop_r = get_prop(wid, XCB_ATOM_WM_NAME, XCB_ATOM_STRING);
-    if(prop_r == NULL)
+    if(!prop_r)
         return NULL;
 
     char *title = (char *) xcb_get_property_value(prop_r);
@@ -327,7 +250,7 @@ char **get_class(int wid)
 {
     char **classes = malloc(sizeof(char*)*2);
     xcb_get_property_reply_t *prop_r = get_prop(wid, XCB_ATOM_WM_CLASS, XCB_ATOM_STRING);
-    if(prop_r == NULL) {
+    if(!prop_r) {
         free(classes);
         return NULL;
     }
@@ -341,29 +264,8 @@ char **get_class(int wid)
     return classes;
 }
 
-void raise(int wid)
-{
-    uint32_t values[] = {XCB_STACK_MODE_ABOVE};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_STACK_MODE, values);
-    xcb_flush(conn);
-}
-
-void lower(int wid)
-{
-    uint32_t values[] = {XCB_STACK_MODE_BELOW};
-    xcb_configure_window(conn, wid, XCB_CONFIG_WINDOW_STACK_MODE, values);
-    xcb_flush(conn);
-}
-
-static void unsubscribe(int wid){
-	uint32_t values[] = {XCB_EVENT_MASK_NO_EVENT};
-	xcb_change_window_attributes(conn, wid, XCB_CW_EVENT_MASK, values);
-}
-
-static void subscribe(int wid){
-	uint32_t values[] = {XCB_EVENT_MASK_ENTER_WINDOW|XCB_EVENT_MASK_LEAVE_WINDOW};
-	xcb_change_window_attributes(conn, wid, XCB_CW_EVENT_MASK, values);
-}
+#define subscribe(wid) set_subscription(wid, XCB_EVENT_MASK_ENTER_WINDOW|XCB_EVENT_MASK_LEAVE_WINDOW)
+#define unsubscribe(wid) set_subscription(wid, XCB_EVENT_MASK_NO_EVENT)
 
 //Get events for a window
 char *get_events(){
@@ -376,55 +278,49 @@ char *get_events(){
 		if(!get_ignored(wid))
 			subscribe(wid);
 	}
-	xcb_flush(conn);
 
 	char *event_string;
 	bool done = false;
 	while(!done){
 		xcb_generic_event_t *event = xcb_wait_for_event(conn);
 		int wid;
+		const char * ev_id = NULL;
 		switch (event->response_type & ~0x80){
 			case XCB_CREATE_NOTIFY:
-				wid=((xcb_create_notify_event_t*)event)->window;
-				event_string=malloc(snprintf(NULL, 0, "CREATE: 0x%08x\n", wid)+1);
-				sprintf(event_string, "CREATE: 0x%08x\n", wid);
-				done=true;
+				ev_id = "CREATE";
+				wid = ((xcb_create_notify_event_t * )event)->window;
 				break;
 
 			case XCB_DESTROY_NOTIFY:
-				wid=((xcb_create_notify_event_t*)event)->window;
-				event_string=malloc(snprintf(NULL, 0, "DESTROY: 0x%08x\n", wid)+1);
-				sprintf(event_string, "DESTROY: 0x%08x\n", wid);
-				done=true;
+				ev_id = "DESTROY";
+				wid = ((xcb_destroy_notify_event_t * )event)->window;
 				break;
 
 			case XCB_ENTER_NOTIFY:
-				wid = ((xcb_enter_notify_event_t*)event)->event;
-				event_string=malloc(snprintf(NULL, 0, "ENTER: 0x%08x\n", wid)+1);
-				sprintf(event_string, "ENTER: 0x%08x\n", wid);
-				done=true;
+				ev_id = "ENTER";
+				wid = ((xcb_enter_notify_event_t * )event)->event;
 				break;
 
 			case XCB_LEAVE_NOTIFY:
-				wid = ((xcb_enter_notify_event_t*)event)->event;
-				event_string=malloc(snprintf(NULL, 0, "LEAVE: 0x%08x\n", wid)+1);
-				sprintf(event_string, "LEAVE: 0x%08x\n", wid);
-				done=true;
+				ev_id = "LEAVE";
+				wid = ((xcb_leave_notify_event_t * )event)->event;
 				break;
 
 			case XCB_MAP_NOTIFY:
-				wid = ((xcb_map_notify_event_t*)event)->window;
-				event_string=malloc(snprintf(NULL, 0, "MAP: 0x%08x\n", wid)+1);
-				sprintf(event_string, "MAP: 0x%08x\n", wid);
-				done=true;
+				ev_id = "MAP";
+				wid = ((xcb_map_notify_event_t * )event)->window;
 				break;
 
 			case XCB_UNMAP_NOTIFY:
-				wid = ((xcb_map_notify_event_t*)event)->window;
-				event_string=malloc(snprintf(NULL, 0, "UNMAP: 0x%08x\n", wid)+1);
-				sprintf(event_string, "UNMAP: 0x%08x\n", wid);
-				done=true;
+				ev_id = "UNMAP";
+				wid = ((xcb_unmap_notify_event_t * )event)->window;
 				break;
+		}
+
+		if ( ev_id ) {
+			event_string = malloc(snprintf(NULL, 0, "%s: 0x%08x\n", ev_id, wid) + 1);
+			sprintf(event_string, "%s: 0x%08x\n", ev_id, wid);
+			done = true;
 		}
 	}
 	//Unsubscribe from events

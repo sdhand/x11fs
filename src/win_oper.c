@@ -34,29 +34,13 @@ void border_width_write(int wid, const char *buf)
 char *root_width_read(int wid)
 {
 	(void) wid;
-	int width=get_width(-1);
-	if(width==-1){
-		errno = -EIO;
-		return NULL;
-	}
-
-	char *width_string=malloc(snprintf(NULL, 0, "%d\n", width)+1);
-	sprintf(width_string, "%d\n", width);
-	return width_string;
+	return geometry_width_read(-1);
 }
 
- char *root_height_read(int wid)
+char *root_height_read(int wid)
 {
 	(void) wid;
-	int height = get_height(-1);
-	if(height==-1){
-		errno=-EIO;
-		return NULL;
-	}
-
-	char *height_string=malloc(snprintf(NULL, 0, "%d\n", height)+1);
-	sprintf(height_string, "%d\n", height);
-	return height_string;
+	return geometry_height_read(-1);
 }
 
 char *geometry_width_read(int wid)
@@ -101,11 +85,11 @@ char *geometry_x_read(int wid)
     if(x==-1){
         errno = -EIO;
         return NULL;
-    }   
+    }
 
     char *x_string=malloc(snprintf(NULL, 0, "%d\n", x)+1);
     sprintf(x_string, "%d\n", x);
-    return x_string;	
+    return x_string;
 }
 
 void geometry_x_write(int wid, const char *buf)
@@ -119,7 +103,7 @@ char *geometry_y_read(int wid)
     if(y==-1){
         errno = -EIO;
         return NULL;
-    }   
+    }
 
     char *y_string=malloc(snprintf(NULL, 0, "%d\n", y)+1);
     sprintf(y_string, "%d\n", y);
@@ -133,41 +117,29 @@ void geometry_y_write(int wid, const char *buf)
 
 char *mapped_read(int wid)
 {
-	if(get_mapped(wid))
-		return strdup("true\n");
-	else
-		return strdup("false\n");
+	return strdup(get_mapped(wid) ? "true\n" : "false\n");
 }
 
 void mapped_write(int wid, const char *buf)
 {
-	if(strcmp(buf, "true\n") == 0)
-		set_mapped(wid, true);
-	if(strcmp(buf, "false\n") == 0)
-		set_mapped(wid, false);
+	set_mapped(wid, !strcmp(buf, "true\n"));
 }
 
 char *ignored_read(int wid)
 {
-	if(get_ignored(wid))
-		return strdup("true\n");
-	else
-		return strdup("false\n");
+	return strdup(get_ignored(wid) ? "true\n" : "false\n");
 }
 
 void ignored_write(int wid, const char *buf)
 {
-	if(strcmp(buf, "true\n") == 0)
-		set_ignored(wid, true);
-	if(strcmp(buf, "false\n") == 0)
-		set_ignored(wid, false);
+	set_ignored(wid, !strcmp(buf, "true\n"));
 }
 
 void stack_write(int wid, const char *buf)
 {
-	if(strcmp(buf, "raise\n") == 0)
+	if(!strcmp(buf, "raise\n"))
 		raise(wid);
-	if(strcmp(buf, "lower\n") == 0)
+	if(!strcmp(buf, "lower\n"))
 		lower(wid);
 }
 

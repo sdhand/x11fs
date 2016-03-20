@@ -25,39 +25,37 @@ struct x11fs_file{
 
 //Our file layout
 static const struct x11fs_file x11fs_files[] = {
-	{"/", S_IFDIR | 0700, false, true, NULL, NULL},
-		{"/root", S_IFDIR | 0700, false, true, NULL, NULL},
-			{"/root/geometry", S_IFDIR | 0700, false, true, NULL, NULL},
-				{"/root/geometry/width", S_IFREG | 0400, false, false, root_width_read, NULL},
-				{"/root/geometry/height", S_IFREG | 0400, false, false, root_height_read,  NULL},
-		{"/0x*", S_IFDIR | 0700, false, true, NULL, NULL},
-			{"/0x*/border", S_IFDIR | 0700, false, true, NULL, NULL},
-				{"/0x*/border/color", S_IFREG | 0200, false, false, NULL, border_color_write},
-				{"/0x*/border/width", S_IFREG | 0600, false, false, border_width_read, border_width_write},
-			{"/0x*/geometry", S_IFDIR | 0700, false, true, NULL, NULL},
-				{"/0x*/geometry/width", S_IFREG | 0600, false, false, geometry_width_read, geometry_width_write},
-				{"/0x*/geometry/height", S_IFREG | 0600, false, false, geometry_height_read,  geometry_height_write},
-				{"/0x*/geometry/x", S_IFREG | 0600, false, false, geometry_x_read, geometry_x_write},
-				{"/0x*/geometry/y", S_IFREG | 0600, false, false, geometry_y_read, geometry_y_write},
-			{"/0x*/mapped", S_IFREG | 0600, false, false, mapped_read, mapped_write},
-			{"/0x*/ignored", S_IFREG | 0600, false, false, ignored_read, ignored_write},
-			{"/0x*/stack", S_IFREG | 0200, false, false, NULL, stack_write},
-			{"/0x*/title", S_IFREG | 0400, false, false, title_read, NULL},
-			{"/0x*/class", S_IFREG | 0400, false, false, class_read, NULL},
-		{"/focused", S_IFREG | 0600, false, false, focused_read, focused_write},
-		{"/event", S_IFREG | 0400, true, false, event_read, NULL},
+	{"/",                     S_IFDIR | 0700, false, true,  NULL,                 NULL},
+	{"/root",                 S_IFDIR | 0700, false, true,  NULL,                 NULL},
+	{"/root/geometry",        S_IFDIR | 0700, false, true,  NULL,                 NULL},
+	{"/root/geometry/width",  S_IFREG | 0400, false, false, root_width_read,      NULL},
+	{"/root/geometry/height", S_IFREG | 0400, false, false, root_height_read,     NULL},
+	{"/0x*",                  S_IFDIR | 0700, false, true,  NULL,                 NULL},
+	{"/0x*/border",           S_IFDIR | 0700, false, true,  NULL,                 NULL},
+	{"/0x*/border/color",     S_IFREG | 0200, false, false, NULL,                 border_color_write},
+	{"/0x*/border/width",     S_IFREG | 0600, false, false, border_width_read,    border_width_write},
+	{"/0x*/geometry",         S_IFDIR | 0700, false, true,  NULL,                 NULL},
+	{"/0x*/geometry/width",   S_IFREG | 0600, false, false, geometry_width_read,  geometry_width_write},
+	{"/0x*/geometry/height",  S_IFREG | 0600, false, false, geometry_height_read, geometry_height_write},
+	{"/0x*/geometry/x",       S_IFREG | 0600, false, false, geometry_x_read,      geometry_x_write},
+	{"/0x*/geometry/y",       S_IFREG | 0600, false, false, geometry_y_read,      geometry_y_write},
+	{"/0x*/mapped",           S_IFREG | 0600, false, false, mapped_read,          mapped_write},
+	{"/0x*/ignored",          S_IFREG | 0600, false, false, ignored_read,         ignored_write},
+	{"/0x*/stack",            S_IFREG | 0200, false, false, NULL,                 stack_write},
+	{"/0x*/title",            S_IFREG | 0400, false, false, title_read,           NULL},
+	{"/0x*/class",            S_IFREG | 0400, false, false, class_read,           NULL},
+	{"/focused",              S_IFREG | 0600, false, false, focused_read,         focused_write},
+	{"/event",                S_IFREG | 0400, true,  false, event_read,           NULL},
 };
 
 //Pull out the id of a window from a path
 static int get_winid(const char *path)
 {
-	int wid = 0;
+	int wid = -1;
 	//Check if the path is to a window directory or it's contents
-	if(strncmp(path, "/0x", 3) == 0)
-		//Get the id
-		sscanf(path, "/0x%08x", &wid);
-	else
-		return -1;
+	if(!strncmp(path, "/0x", 3) && sscanf(path, "/0x%08x", &wid) != 1){
+		wid = 0;
+	}
 
 	return wid;
 }
@@ -71,7 +69,7 @@ static void x11fs_destroy()
 //Doesn't actually do anything but it's required we implement this as it will get called when writing a value to a file that's shorter than the current contents
 static int x11fs_truncate(const char *path, off_t size)
 {
-	return 0;	
+	return 0;
 }
 
 
@@ -82,35 +80,32 @@ static int x11fs_getattr(const char *path, struct stat *stbuf)
 	memset(stbuf, 0, sizeof(struct stat));
 
 	//loop through our filesystem layout and check if the path matches one in our layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
-		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
+		if(!fnmatch(x11fs_files[i].path, path, FNM_PATHNAME)){
 			//if the path is to a window file, check that the window exists
 			int wid;
-			if((wid=get_winid(path)) != -1){
-				if(!exists(wid))
-					return -ENOENT;
+			if((wid=get_winid(path)) != -1 && !exists(wid)){
+				return -ENOENT;
 			}
 
 			//if a path matches just use the information about the file from the layout
-			if(x11fs_files[i].dir)
-				stbuf->st_nlink = 2;
-			else
-				stbuf->st_nlink = 1;
+			stbuf->st_nlink = 2 - !x11fs_files[i].dir;
 			stbuf->st_mode = x11fs_files[i].mode;
 
 			//Set the size of a file by getting its contents
-			//If the file uses direct IO (it acts like a stream, just set size to 0)		
+			//If the file uses direct IO (it acts like a stream, just set size to 0)
 			stbuf->st_size = 0;
 			if((x11fs_files[i].read != NULL) && !(x11fs_files[i].direct_io))
 			{
 				char *read_string=x11fs_files[i].read(wid);
-				if(read_string==NULL)
+				if(!read_string)
 					return errno;
 
 				stbuf->st_size=strlen(read_string);
 				free(read_string);
 			}
-			
+
 			return 0;
 		}
 	}
@@ -127,9 +122,8 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 	//If the path is to a non existant window says so
 	int wid;
-	if((wid = get_winid(path)) != -1){
-		if(!exists(wid))
-			return -ENOENT;
+	if((wid = get_winid(path)) != -1 && !exists(wid)){
+		return -ENOENT;
 	}
 
 	bool exists = false;
@@ -137,7 +131,8 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 
 	//Iterate through our filesystem layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
 
 		//If the path was to a window replace the wildcard in the layout with the actual window we're looking at
 		char *matchpath;
@@ -152,25 +147,21 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 		//As the path for the root directory is just a / with no text we need to treat it as being 0 length
 		//This is for when we check if something in our layout is in the folder we're looking at, but not in a subfolder
-		int len;
-		if(strcmp(path, "/") == 0)
-			len = 0;
-		else
-			len = strlen(path);
+		int len = !strcmp(path, "/") ? 0 : strlen(path);
 
 		//If the file exists in our layout
-		if(strncmp(path, matchpath, strlen(path)) == 0){
+		if(!strncmp(path, matchpath, strlen(path))){
 			exists = true;
 
 			//Check that to see if an element in our layout is directly below the folder we're looking at in the heirarchy
 			//If so add it to the directory listing
 			if((strlen(matchpath) > strlen(path))
 					&& ((matchpath+len)[0] == '/')
-					&& (strchr(matchpath+len+1, '/') == NULL)){
+					&& !strchr(matchpath+len+1, '/')){
 				dir = true;
 
 				//If it's a wildcarded window in our layout with the list of actual windows
-				if(strcmp(matchpath, "/0x*") == 0){
+				if(!strcmp(matchpath, "/0x*")){
 					//Get the list of windows
 					int *wins = list_windows();
 
@@ -199,7 +190,7 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 	if(!exists)
 		return -ENOENT;
-	
+
 	//Add any extra needed elements to the directory list
 	if(dir){
 		filler(buf, ".", NULL, 0);
@@ -215,14 +206,14 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 static int x11fs_open(const char *path, struct fuse_file_info *fi)
 {
 	//Iterate through our layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
 		//If our file is in the layout
-		 if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
+		 if(!fnmatch(x11fs_files[i].path, path, FNM_PATHNAME)){
 			//If the path is to a window check it exists
 			int wid;
-			if((wid=get_winid(path)) != -1){
-				if(!exists(wid))
-					return -ENOENT;
+			if((wid=get_winid(path)) != -1 && !exists(wid)){
+				return -ENOENT;
 			}
 
 			//Check if open makes sense
@@ -241,26 +232,26 @@ static int x11fs_open(const char *path, struct fuse_file_info *fi)
 static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	//Iterate through our layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
 		//If our file is in the layout
-		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
+		if(!fnmatch(x11fs_files[i].path, path, FNM_PATHNAME)){
 			//If the path is to a window check it exists
 			int wid;
-			if((wid=get_winid(path)) != -1){
-				if(!exists(wid))
-					return -ENOENT;
+			if((wid=get_winid(path)) != -1 && !exists(wid)){
+				return -ENOENT;
 			}
-			
+
 			//Check we can actually read
 			if(x11fs_files[i].dir)
 				return -EISDIR;
 
-			if(x11fs_files[i].read == NULL)
+			if(!x11fs_files[i].read)
 				return -EACCES;
 
 			//Call the read function and stick the results in the buffer
 			char *result= x11fs_files[i].read(wid);
-			if(result == NULL)
+			if(!result)
 				return errno;
 
 			size_t len = strlen(result);
@@ -278,21 +269,21 @@ static int x11fs_read(const char *path, char *buf, size_t size, off_t offset, st
 static int x11fs_write(const char *path, const char *buf, size_t size, off_t offset,  struct fuse_file_info *fi)
 {
 	//Iterate through our layout
-	for(int i=0; i<sizeof(x11fs_files)/sizeof(struct x11fs_file); i++){
+	size_t files_length = sizeof(x11fs_files)/sizeof(struct x11fs_file);
+	for(size_t i=0; i<files_length; i++){
 		//If our file is in the layout
-		if(fnmatch(x11fs_files[i].path, path, FNM_PATHNAME) == 0){
+		if(!fnmatch(x11fs_files[i].path, path, FNM_PATHNAME)){
 			//If the path is to a window check it exists
 			int wid;
-			if((wid=get_winid(path)) != -1){
-				if(!exists(wid))
-					return -ENOENT;
+			if((wid=get_winid(path)) != -1 && !exists(wid)){
+				return -ENOENT;
 			}
 
 			//Check we can actually read
 			if(x11fs_files[i].dir)
 				return -EISDIR;
 
-			if(x11fs_files[i].write == NULL)
+			if(!x11fs_files[i].write)
 				return -EACCES;
 
 			//Call the write function
@@ -309,10 +300,7 @@ static int x11fs_rmdir(const char *path)
 	//Returning ENOSYS because sometimes this will be on a dir, just not one that represents a window
 	//TODO: Probably return more meaningful errors
 	int wid;
-	if((wid=get_winid(path)) == -1)
-		return -ENOSYS;
-	
-	if(strlen(path)>11)
+	if((wid=get_winid(path)) == -1 || strlen(path)>11)
 		return -ENOSYS;
 
 	//Close the window
@@ -336,7 +324,7 @@ static struct fuse_operations x11fs_operations = {
 int main(int argc, char **argv)
 {
 	if(xcb_init()!=X11FS_SUCCESS){
-		fprintf(stderr, "Failed to setup xcb. Quiting...\n");
+		fputs("Failed to setup xcb. Quiting...\n", stderr);
 		return 1;
 	}
 	return fuse_main(argc, argv, &x11fs_operations, NULL);
