@@ -178,6 +178,7 @@ DEFINE_NORM_SETTER(height,       xcb_configure_window,         XCB_CONFIG_WINDOW
 DEFINE_NORM_SETTER(x,            xcb_configure_window,         XCB_CONFIG_WINDOW_X);
 DEFINE_NORM_SETTER(y,            xcb_configure_window,         XCB_CONFIG_WINDOW_Y);
 DEFINE_NORM_SETTER(stack_mode,   xcb_configure_window,         XCB_CONFIG_WINDOW_STACK_MODE);
+DEFINE_NORM_SETTER(subscription, xcb_change_window_attributes, XCB_CW_EVENT_MASK);
 
 #define DEFINE_GEOM_GETTER(name) \
 int get_##name(int wid)\
@@ -263,15 +264,8 @@ char **get_class(int wid)
     return classes;
 }
 
-static void unsubscribe(int wid){
-	uint32_t values[] = {XCB_EVENT_MASK_NO_EVENT};
-	xcb_change_window_attributes(conn, wid, XCB_CW_EVENT_MASK, values);
-}
-
-static void subscribe(int wid){
-	uint32_t values[] = {XCB_EVENT_MASK_ENTER_WINDOW|XCB_EVENT_MASK_LEAVE_WINDOW};
-	xcb_change_window_attributes(conn, wid, XCB_CW_EVENT_MASK, values);
-}
+#define subscribe(wid) set_subscription(wid, XCB_EVENT_MASK_ENTER_WINDOW|XCB_EVENT_MASK_LEAVE_WINDOW)
+#define unsubscribe(wid) set_subscription(wid, XCB_EVENT_MASK_NO_EVENT)
 
 //Get events for a window
 char *get_events(){
@@ -284,7 +278,6 @@ char *get_events(){
 		if(!get_ignored(wid))
 			subscribe(wid);
 	}
-	xcb_flush(conn);
 
 	char *event_string;
 	bool done = false;

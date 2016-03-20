@@ -44,4 +44,6 @@ void set_stack_mode(int wid, int position);
 #define raise(wid) set_stack_mode(wid, XCB_STACK_MODE_ABOVE)
 #define lower(wid) set_stack_mode(wid, XCB_STACK_MODE_BELOW)
 
+void set_subscription(int wid, int eventmask);
+
 char *get_events();
