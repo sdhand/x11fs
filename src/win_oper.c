@@ -146,8 +146,10 @@ void stack_write(int wid, const char *buf)
 char *title_read(int wid)
 {
 	char *title=get_title(wid);
-	char *title_string=malloc(strlen(title)+2);
-	sprintf(title_string, "%s\n", title);
+	size_t title_len = strlen(title);
+	char *title_string=malloc(title_len+2);
+	memset(title_string, 0, title_len+2);
+	if ( title_len ) { sprintf(title_string, "%s\n", title); }
 	free(title);
 	return title_string;
 }
@@ -155,8 +157,14 @@ char *title_read(int wid)
 char *class_read(int wid)
 {
 	char **classes=get_class(wid);
-	char *class_string=malloc(strlen(classes[0])+strlen(classes[1])+3);
-	sprintf(class_string, "%s\n%s\n", classes[0], classes[1]);
+	size_t class0_len = strlen(classes[0]), class1_len = strlen(classes[1]);
+	char *class_string=malloc(class0_len + class1_len + 3);
+	if ( class0_len ) {
+		sprintf(class_string, "%s\n", classes[0]);
+	}
+	if ( class1_len ) {
+		sprintf(class_string + class0_len + 1, "%s\n", classes[1]);
+	}
 	free(classes[0]);
 	free(classes[1]);
 	free(classes);
