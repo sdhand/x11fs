@@ -197,17 +197,7 @@ DEFINE_GEOM_GETTER(width);
 DEFINE_GEOM_GETTER(height);
 DEFINE_GEOM_GETTER(x);
 DEFINE_GEOM_GETTER(y);
-
-int get_border_width(int wid)
-{
-    xcb_get_geometry_reply_t *geom_r = get_geom(wid);
-    if(!geom_r)
-        return -1;
-
-    int bw = geom_r->border_width;
-    free(geom_r);
-    return bw;
-}
+DEFINE_GEOM_GETTER(border_width);
 
 int get_mapped(int wid)
 {
