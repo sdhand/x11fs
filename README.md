@@ -21,6 +21,10 @@ Usage
 See the [wiki](https://github.com/sdhand/x11fs/wiki) for more information.
 Or go [here](https://github.com/sdhand/x11fs/wiki/Example-Setup) for a simple example setup.
 
+Contact
+-------
+
+Please join #x11fs on freenode if you have any questions or just want to talk about the project. Please be patient however, there are not many members of the channel so it may be inactive at times.
 
 Thanks to
 ---------
