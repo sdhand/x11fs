@@ -108,7 +108,7 @@ char *title_read(int wid)
 
 	memset(title_string, 0, title_len+2);
 	if ( title_len && sprintf(title_string, "%s\n", title) < 0 ) {
-		syslog(LOg_ERR, "failed to store title string in %s\n", __func__);
+		syslog(LOG_ERR, "failed to store title string in %s\n", __func__);
 	}
 
 	free(title);
@@ -120,7 +120,7 @@ char *class_read(int wid)
 	char **classes=get_class(wid);
 	size_t class0_len = strlen(classes[0]), class1_len = strlen(classes[1]);
 	char *class_string=malloc(class0_len + class1_len + 3);
-	if ( !title_string ) {
+	if ( !class_string ) {
 		syslog(LOG_ERR, "failed to allocate in %s: %s\n", __func__, strerror(ENOMEM));
 	}
 
@@ -128,7 +128,7 @@ char *class_read(int wid)
 		syslog(LOG_ERR, "failed to store first class in %s\n", __func__);
 	}
 	if ( class1_len && sprintf(class_string + class0_len + 1, "%s\n", classes[1]) < 0) {
-		syslog(LOg_ERR, "failed to store second class in %s\n", __func__);
+		syslog(LOG_ERR, "failed to store second class in %s\n", __func__);
 	}
 
 	free(classes[0]);
