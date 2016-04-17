@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <syslog.h>
 #include "x11fs.h"
 
 //Specific read and write functions for each file
@@ -13,23 +14,42 @@ void border_color_write(int wid, const char *buf)
 	set_border_color(wid, strtol(buf, NULL, 16));
 }
 
-char *border_width_read(int wid)
-{
-	int border_width=get_border_width(wid);
-	if(border_width==-1){
-		errno = -EIO;
-		return NULL;
+#define DECLARE_NORM_READER(cat, prop, getter) \
+	char * cat##_##prop##_read (int wid) {\
+		int i = getter(wid);\
+		if ( i == -1 ) {\
+			errno = -EIO;\
+			return NULL;\
+		}\
+		\
+		char * str = malloc(snprintf(NULL, 0, "%d\n", i) + 1);\
+		if ( !str ) {\
+			syslog(LOG_ERR, "failed to allocate in %s: %s\n", __func__, strerror(ENOMEM));\
+		}\
+		\
+		if ( sprintf(str, "%d\n", i) < 0 ) {\
+			syslog(LOG_ERR, "failed to store value in %s\n", __func__);\
+		}\
+		\
+		return str;\
 	}
-	//Work out the size needed to malloc by calling snprintf with a size of 0
-	char *border_width_string=malloc(snprintf(NULL, 0, "%d\n", border_width)+1);
-	sprintf(border_width_string, "%d\n", border_width);
-	return border_width_string;
-}
 
-void border_width_write(int wid, const char *buf)
-{
-	set_border_width(wid, atoi(buf));
-}
+DECLARE_NORM_READER(border, width, get_border_width);
+DECLARE_NORM_READER(geometry, width, get_width);
+DECLARE_NORM_READER(geometry, height, get_height);
+DECLARE_NORM_READER(geometry, x, get_x);
+DECLARE_NORM_READER(geometry, y, get_y);
+
+#define DECLARE_NORM_WRITER(cat, prop, setter) \
+	void cat##_##prop##_write (int wid, const char * buf) {\
+		setter(wid, atoi(buf));\
+	}
+
+DECLARE_NORM_WRITER(border, width, set_border_width);
+DECLARE_NORM_WRITER(geometry, width, set_width);
+DECLARE_NORM_WRITER(geometry, height, set_height);
+DECLARE_NORM_WRITER(geometry, x, set_x);
+DECLARE_NORM_WRITER(geometry, y, set_y);
 
 char *root_width_read(int wid)
 {
@@ -41,78 +61,6 @@ char *root_height_read(int wid)
 {
 	(void) wid;
 	return geometry_height_read(-1);
-}
-
-char *geometry_width_read(int wid)
-{
-	int width=get_width(wid);
-	if(width==-1){
-		errno = -EIO;
-		return NULL;
-	}
-
-	char *width_string=malloc(snprintf(NULL, 0, "%d\n", width)+1);
-	sprintf(width_string, "%d\n", width);
-	return width_string;
-}
-
-void geometry_width_write(int wid, const char *buf)
-{
-	set_width(wid, atoi(buf));
-}
-
-char *geometry_height_read(int wid)
-{
-	int height=get_height(wid);
-	if(height==-1){
-		errno = -EIO;
-		return NULL;
-	}
-
-	char *height_string=malloc(snprintf(NULL, 0, "%d\n", height)+1);
-	sprintf(height_string, "%d\n", height);
-	return height_string;
-}
-
-void geometry_height_write(int wid, const char *buf)
-{
-	set_height(wid, atoi(buf));
-}
-
-char *geometry_x_read(int wid)
-{
-    int x=get_x(wid);
-    if(x==-1){
-        errno = -EIO;
-        return NULL;
-    }
-
-    char *x_string=malloc(snprintf(NULL, 0, "%d\n", x)+1);
-    sprintf(x_string, "%d\n", x);
-    return x_string;
-}
-
-void geometry_x_write(int wid, const char *buf)
-{
-	set_x(wid, atoi(buf));
-}
-
-char *geometry_y_read(int wid)
-{
-    int y=get_y(wid);
-    if(y==-1){
-        errno = -EIO;
-        return NULL;
-    }
-
-    char *y_string=malloc(snprintf(NULL, 0, "%d\n", y)+1);
-    sprintf(y_string, "%d\n", y);
-    return y_string;
-}
-
-void geometry_y_write(int wid, const char *buf)
-{
-	set_y(wid, atoi(buf));
 }
 
 char *mapped_read(int wid)
