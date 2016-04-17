@@ -11,7 +11,14 @@
 
 void border_color_write(int wid, const char *buf)
 {
-	set_border_color(wid, strtol(buf, NULL, 16));
+	errno = 0;
+	long color = strtol(buf, NULL, 16);
+	int errsv = errno;
+	if ( errsv ) {
+		syslog(LOG_ERR, "failed to parse color in %s: %s\n", __func__, strerror(errsv));
+	}
+
+	set_border_color(wid, color);
 }
 
 #define DECLARE_NORM_READER(cat, prop, getter) \
@@ -168,5 +175,12 @@ char *focused_read(int wid)
 void focused_write(int wid, const char *buf)
 {
 	(void) wid;
-	focus(strtol(buf, NULL, 16));
+	errno = 0;
+	long id = strtol(buf, NULL, 16);
+	int errsv = errno;
+	if ( errsv ) {
+		syslog(LOG_ERR, "failed to parse id to focus in %s: %s\n", __func__, strerror(errsv));
+	}
+
+	focus(id);
 }
