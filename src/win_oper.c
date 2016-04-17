@@ -102,8 +102,15 @@ char *title_read(int wid)
 	char *title=get_title(wid);
 	size_t title_len = strlen(title);
 	char *title_string=malloc(title_len+2);
+	if ( !title_string ) {
+		syslog(LOG_ERR, "failed to allocate in %s: %s\n", __func__, strerror(ENOMEM));
+	}
+
 	memset(title_string, 0, title_len+2);
-	if ( title_len ) { sprintf(title_string, "%s\n", title); }
+	if ( title_len && sprintf(title_string, "%s\n", title) < 0 ) {
+		syslog(LOg_ERR, "failed to store title string in %s\n", __func__);
+	}
+
 	free(title);
 	return title_string;
 }
@@ -113,12 +120,17 @@ char *class_read(int wid)
 	char **classes=get_class(wid);
 	size_t class0_len = strlen(classes[0]), class1_len = strlen(classes[1]);
 	char *class_string=malloc(class0_len + class1_len + 3);
-	if ( class0_len ) {
-		sprintf(class_string, "%s\n", classes[0]);
+	if ( !title_string ) {
+		syslog(LOG_ERR, "failed to allocate in %s: %s\n", __func__, strerror(ENOMEM));
 	}
-	if ( class1_len ) {
-		sprintf(class_string + class0_len + 1, "%s\n", classes[1]);
+
+	if ( class0_len && sprintf(class_string, "%s\n", classes[0]) < 0) {
+		syslog(LOG_ERR, "failed to store first class in %s\n", __func__);
 	}
+	if ( class1_len && sprintf(class_string + class0_len + 1, "%s\n", classes[1]) < 0) {
+		syslog(LOg_ERR, "failed to store second class in %s\n", __func__);
+	}
+
 	free(classes[0]);
 	free(classes[1]);
 	free(classes);
@@ -133,15 +145,23 @@ char *event_read(int wid)
 char *focused_read(int wid)
 {
 	(void) wid;
-	char *focusedwin;
 	int focusedid=focused();
-	if(focusedid){
-		focusedwin = malloc(WID_STRING_LENGTH+1);
-		sprintf(focusedwin, "0x%08x\n", focusedid);
-	}else{
-		focusedwin = malloc(6);
-		sprintf(focusedwin, "root\n");
+	char * focusedwin = malloc(focusedid ? WID_STRING_LENGTH + 1 : 6);
+	if ( !focusedwin ) {
+		syslog(LOG_ERR, "failed to allocate in %s: %s\n", __func__, strerror(ENOMEM));
 	}
+
+	int stat = 0;
+	if ( !focusedid ) {
+		stat = sprintf(focusedwin, "root\n");
+	} else {
+		stat = sprintf(focusedwin, "0x%08x\n", focusedid);
+	}
+
+	if ( stat < 0 ) {
+		syslog(LOG_ERR, "failed to store focused window in %s\n", __func__);
+	}
+
 	return focusedwin;
 }
 
