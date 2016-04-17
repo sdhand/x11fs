@@ -34,22 +34,22 @@ void border_color_write(int wid, const char *buf)
 		return str;\
 	}
 
-DECLARE_NORM_READER(border, width, get_border_width);
-DECLARE_NORM_READER(geometry, width, get_width);
+DECLARE_NORM_READER(border,   width,  get_border_width);
+DECLARE_NORM_READER(geometry, width,  get_width);
 DECLARE_NORM_READER(geometry, height, get_height);
-DECLARE_NORM_READER(geometry, x, get_x);
-DECLARE_NORM_READER(geometry, y, get_y);
+DECLARE_NORM_READER(geometry, x,      get_x);
+DECLARE_NORM_READER(geometry, y,      get_y);
 
 #define DECLARE_NORM_WRITER(cat, prop, setter) \
 	void cat##_##prop##_write (int wid, const char * buf) {\
 		setter(wid, atoi(buf));\
 	}
 
-DECLARE_NORM_WRITER(border, width, set_border_width);
-DECLARE_NORM_WRITER(geometry, width, set_width);
+DECLARE_NORM_WRITER(border,   width,  set_border_width);
+DECLARE_NORM_WRITER(geometry, width,  set_width);
 DECLARE_NORM_WRITER(geometry, height, set_height);
-DECLARE_NORM_WRITER(geometry, x, set_x);
-DECLARE_NORM_WRITER(geometry, y, set_y);
+DECLARE_NORM_WRITER(geometry, x,      set_x);
+DECLARE_NORM_WRITER(geometry, y,      set_y);
 
 char *root_width_read(int wid)
 {
