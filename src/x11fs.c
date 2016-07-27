@@ -287,7 +287,9 @@ static int x11fs_write(const char *path, const char *buf, size_t size, off_t off
 				return -EACCES;
 
 			//Call the write function
-			x11fs_files[i].write(wid, buf);
+			char *trunc_buf = strndup(buf, size);
+			x11fs_files[i].write(wid, trunc_buf);
+			free(trunc_buf);
 		}
 	}
 	return size;
