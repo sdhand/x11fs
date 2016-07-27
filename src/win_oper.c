@@ -122,7 +122,10 @@ char *mapped_read(int wid)
 
 void mapped_write(int wid, const char *buf)
 {
-	set_mapped(wid, !strcmp(buf, "true\n"));
+	if(!strcmp(buf, "true\n"))
+		set_mapped(wid, true);
+	if(!strcmp(buf, "false\n"))
+		set_mapped(wid, false);
 }
 
 char *ignored_read(int wid)
@@ -132,7 +135,10 @@ char *ignored_read(int wid)
 
 void ignored_write(int wid, const char *buf)
 {
-	set_ignored(wid, !strcmp(buf, "true\n"));
+	if(!strcmp(buf, "true\n"))
+		set_ignored(wid, true);
+	if(!strcmp(buf, "false\n"))
+		set_ignored(wid, false);
 }
 
 void stack_write(int wid, const char *buf)
