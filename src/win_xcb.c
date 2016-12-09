@@ -285,6 +285,7 @@ char *get_events(){
 		xcb_generic_event_t *event = xcb_wait_for_event(conn);
 		int wid;
 		const char * ev_id = NULL;
+		xcb_enter_notify_event_t *e;
 		switch (event->response_type & ~0x80){
 			case XCB_CREATE_NOTIFY:
 				ev_id = "CREATE";
@@ -297,13 +298,12 @@ char *get_events(){
 				break;
 
 			case XCB_ENTER_NOTIFY:
-				ev_id = "ENTER";
-				wid = ((xcb_enter_notify_event_t * )event)->event;
-				break;
-
-			case XCB_LEAVE_NOTIFY:
-				ev_id = "LEAVE";
-				wid = ((xcb_leave_notify_event_t * )event)->event;
+				e=(xcb_enter_notify_event_t*) event;
+				printf("%d\n", e->detail);
+				if((e->detail==0) || (e->detail==1) || (e->detail==4) || (e->detail==3)){
+					ev_id = "ENTER";
+					wid = ((xcb_enter_notify_event_t * )event)->event;
+				}
 				break;
 
 			case XCB_MAP_NOTIFY:
