@@ -11,9 +11,12 @@ This allows windows to be controlled using any language or tool with simple file
 Build
 -----
 
-After installing the relevant developement packages for fuse and xcb for your distro (on Ubuntu these are libxcb1-dev, libxcb-icccm4-dev and libfuse-dev), x11fs can be built using the make command.
-Installation can be done by invoking make install.
+After installing the FUSE and XCB developement packages, x11fs can be built using the `make` command. Installation can be done by invoking `make install`.
 
+On distros, the development packages are:
+
+* Gentoo: `x11-libs/libxcb x11-libs/xcb-util-wm sys-fs/fuse`
+* Ubuntu: `libxcb1-dev libxcb-icccm4-dev libfuse-dev`
 
 Usage
 -----
