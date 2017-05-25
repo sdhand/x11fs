@@ -139,7 +139,7 @@ static int x11fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 		if((wid != -1) && (get_winid(x11fs_files[i].path) != -1)){
 			matchpath=malloc(strlen(x11fs_files[i].path)+8);
 			sprintf(matchpath, "/0x%08x", wid);
-			sprintf(matchpath+11, x11fs_files[i].path+4);
+			sprintf(matchpath+11, "%s", x11fs_files[i].path+4);
 		}
 		else
 			matchpath=strdup(x11fs_files[i].path);
