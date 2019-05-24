@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include <fnmatch.h>
+#include <syslog.h>
 #include "x11fs.h"
 #include "win_xcb.h"
 #include "win_oper.h"
@@ -325,9 +326,33 @@ static struct fuse_operations x11fs_operations = {
 //Just setup our connection to X then let fuse handle the rest
 int main(int argc, char **argv)
 {
-	if(xcb_init()!=X11FS_SUCCESS){
-		fputs("Failed to setup xcb. Quiting...\n", stderr);
-		return 1;
+
+	openlog("x11fs", LOG_CONS, LOG_USER);
+	syslog(LOG_INFO, "Started\n");
+
+	pid_t pid = fork();
+	if ( pid < 0 ) {
+		syslog(LOG_ERR, "Failed to fork off\n");
+		closelog();
+		return EXIT_FAILURE;
+	} else if ( pid > 0 ) {
+		exit(EXIT_SUCCESS);
 	}
-	return fuse_main(argc, argv, &x11fs_operations, NULL);
+
+	pid_t sid = 0;
+	if ( (sid = setsid()) < 0 ) {
+		syslog(LOG_ERR, "Failed to create new process group session\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(xcb_init()!=X11FS_SUCCESS){
+		syslog(LOG_ERR, "Failed to setup xcb. Quiting...\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	fuse_main(argc, argv, &x11fs_operations, NULL);
+
+	syslog(LOG_INFO, "Shutting down\n");
+	closelog();
+	return EXIT_SUCCESS;
 }
