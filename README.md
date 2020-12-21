@@ -4,7 +4,7 @@ x11fs X window virtual filesystem
 *This is heavily based off wmutils. [Check them out](http://wmutils.io).*
 
 x11fs is a tool for manipulating X windows.
-It creates a vitual filesystem to represent open windows, similar to what /proc does for processes.
+It creates a virtual filesystem to represent open windows, similar to what /proc does for processes.
 This allows windows to be controlled using any language or tool with simple file IO, in a true unix fashion.
 
 
